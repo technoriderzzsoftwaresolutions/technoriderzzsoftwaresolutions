@@ -47,6 +47,10 @@ io.on('connection', (socket) => {
   socket.on('disconnect', () => console.log('User disconnected'));
 });
 
-server.listen(PORT, () => {
-  console.log(`Real-time server is running on port ${PORT}`);
-});
+if (!process.env.VERCEL) {
+  server.listen(PORT, () => {
+    console.log(`Real-time server is running on port ${PORT}`);
+  });
+}
+
+export default app;
