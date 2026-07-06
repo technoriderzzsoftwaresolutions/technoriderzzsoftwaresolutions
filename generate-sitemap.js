@@ -11,11 +11,15 @@ const SITE_URL = 'https://technoriderzz.com';
 
 async function generateSitemap() {
   try {
-    console.log('Connecting to MongoDB...');
-    await mongoose.connect(MONGODB_URI);
-    console.log('Connected to MongoDB.');
-
-    const db = mongoose.connection.db;
+    let connected = false;
+    try {
+      console.log('Connecting to MongoDB...');
+      await mongoose.connect(MONGODB_URI, { serverSelectionTimeoutMS: 5000 });
+      console.log('Connected to MongoDB.');
+      connected = true;
+    } catch (dbErr) {
+      console.warn('WARNING: Could not connect to MongoDB. Sitemap will only contain static routes.');
+    }
 
     // Fetch dynamic database collections (fail-safe if collections do not exist yet)
     let projects = [];
@@ -23,10 +27,13 @@ async function generateSitemap() {
     let internships = [];
     let blogs = [];
 
-    try { projects = await db.collection('projects').find({}).toArray(); } catch (e) { console.log('projects collection empty or not found'); }
-    try { courses = await db.collection('courses').find({}).toArray(); } catch (e) { console.log('courses collection empty or not found'); }
-    try { internships = await db.collection('internships').find({}).toArray(); } catch (e) { console.log('internships collection empty or not found'); }
-    try { blogs = await db.collection('blogs').find({}).toArray(); } catch (e) { console.log('blogs collection empty or not found'); }
+    if (connected) {
+      const db = mongoose.connection.db;
+      try { projects = await db.collection('projects').find({}).toArray(); } catch (e) { console.log('projects collection empty or not found'); }
+      try { courses = await db.collection('courses').find({}).toArray(); } catch (e) { console.log('courses collection empty or not found'); }
+      try { internships = await db.collection('internships').find({}).toArray(); } catch (e) { console.log('internships collection empty or not found'); }
+      try { blogs = await db.collection('blogs').find({}).toArray(); } catch (e) { console.log('blogs collection empty or not found'); }
+    }
 
     const staticRoutes = [
       '',
@@ -115,8 +122,10 @@ async function generateSitemap() {
   } catch (error) {
     console.error('Error generating sitemap:', error);
   } finally {
-    await mongoose.disconnect();
-    console.log('Disconnected from MongoDB.');
+    if (mongoose.connection.readyState !== 0) {
+      await mongoose.disconnect();
+      console.log('Disconnected from MongoDB.');
+    }
   }
 }
 

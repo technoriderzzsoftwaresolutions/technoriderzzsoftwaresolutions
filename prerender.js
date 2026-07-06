@@ -11,11 +11,15 @@ const SITE_URL = 'https://technoriderzz.com';
 
 async function prerender() {
   try {
-    console.log('Connecting to MongoDB for pre-rendering...');
-    await mongoose.connect(MONGODB_URI);
-    console.log('Connected.');
-
-    const db = mongoose.connection.db;
+    let connected = false;
+    try {
+      console.log('Connecting to MongoDB for pre-rendering...');
+      await mongoose.connect(MONGODB_URI, { serverSelectionTimeoutMS: 5000 });
+      console.log('Connected.');
+      connected = true;
+    } catch (dbErr) {
+      console.warn('WARNING: Could not connect to MongoDB. Pre-rendering will skip dynamic database pages.');
+    }
 
     // Load compiled template
     const templatePath = path.resolve('dist/index.html');
@@ -30,10 +34,13 @@ async function prerender() {
     let internships = [];
     let blogs = [];
 
-    try { projects = await db.collection('projects').find({}).toArray(); } catch (e) { console.log('projects collection empty or not found'); }
-    try { courses = await db.collection('courses').find({}).toArray(); } catch (e) { console.log('courses collection empty or not found'); }
-    try { internships = await db.collection('internships').find({}).toArray(); } catch (e) { console.log('internships collection empty or not found'); }
-    try { blogs = await db.collection('blogs').find({}).toArray(); } catch (e) { console.log('blogs collection empty or not found'); }
+    if (connected) {
+      const db = mongoose.connection.db;
+      try { projects = await db.collection('projects').find({}).toArray(); } catch (e) { console.log('projects collection empty or not found'); }
+      try { courses = await db.collection('courses').find({}).toArray(); } catch (e) { console.log('courses collection empty or not found'); }
+      try { internships = await db.collection('internships').find({}).toArray(); } catch (e) { console.log('internships collection empty or not found'); }
+      try { blogs = await db.collection('blogs').find({}).toArray(); } catch (e) { console.log('blogs collection empty or not found'); }
+    }
 
     // Helper to replace meta tags and inject pre-rendered HTML content
     const generateHtml = (item, type) => {
@@ -180,8 +187,10 @@ async function prerender() {
   } catch (error) {
     console.error('Pre-rendering execution error:', error);
   } finally {
-    await mongoose.disconnect();
-    console.log('MongoDB disconnected.');
+    if (mongoose.connection.readyState !== 0) {
+      await mongoose.disconnect();
+      console.log('MongoDB disconnected.');
+    }
   }
 }
 
