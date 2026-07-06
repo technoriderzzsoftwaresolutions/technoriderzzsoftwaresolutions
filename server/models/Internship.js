@@ -1,6 +1,7 @@
 import mongoose from 'mongoose';
 
 const InternshipSchema = new mongoose.Schema({
+  _id: { type: String, default: () => new mongoose.Types.ObjectId().toString() },
   title: { type: String, required: true },
   category: { type: String, default: "mern" },
   description: { type: String, required: true },

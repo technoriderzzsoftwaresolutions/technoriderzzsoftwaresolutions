@@ -12,7 +12,6 @@ import CourseDetails from "./pages/CourseDetails";
 import Internships from "./pages/Internships";
 import InternshipDetails from "./pages/InternshipDetails";
 import About from "./pages/About";
-import Services from "./pages/Services";
 import Contact from "./pages/Contact";
 import Privacy from "./pages/Privacy";
 import Terms from "./pages/Terms";
@@ -42,7 +41,6 @@ const App = () => (
           <Route path="/internships" element={<Internships />} />
           <Route path="/internships/:id" element={<InternshipDetails />} />
           <Route path="/about" element={<About />} />
-          <Route path="/services" element={<Services />} />
           <Route path="/contact" element={<Contact />} />
           <Route path="/privacy" element={<Privacy />} />
           <Route path="/terms" element={<Terms />} />

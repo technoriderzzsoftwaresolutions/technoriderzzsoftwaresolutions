@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useParams, Link } from "react-router-dom";
 import { Calendar, User, ArrowLeft, Clock, Share2, Tag, ChevronRight } from "lucide-react";
+import Layout from "@/components/layout/Layout";
 
 interface Blog {
   _id: string;
@@ -46,22 +47,27 @@ const BlogDetails = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
-      </div>
+      <Layout>
+        <div className="min-h-screen flex items-center justify-center bg-gray-50">
+          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
+        </div>
+      </Layout>
     );
   }
 
   if (!blog) {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50">
-        <h2 className="text-2xl font-bold mb-4">Blog not found</h2>
-        <Link to="/blogs" className="text-primary hover:underline">Back to Blogs</Link>
-      </div>
+      <Layout>
+        <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50">
+          <h2 className="text-2xl font-bold mb-4">Blog not found</h2>
+          <Link to="/blogs" className="text-primary hover:underline">Back to Blogs</Link>
+        </div>
+      </Layout>
     );
   }
 
   return (
+    <Layout>
     <div className="min-h-screen bg-white">
       {/* Page Header */}
       <div className="bg-slate-800 text-white py-12">
@@ -148,6 +154,7 @@ const BlogDetails = () => {
         </div>
       </div>
     </div>
+    </Layout>
   );
 };
 

@@ -1,6 +1,7 @@
 import mongoose from 'mongoose';
 
 const ProjectSchema = new mongoose.Schema({
+  _id: { type: String, default: () => new mongoose.Types.ObjectId().toString() },
   title: { type: String, required: true },
   code: { type: String, required: true },
   category: { type: String, required: true },

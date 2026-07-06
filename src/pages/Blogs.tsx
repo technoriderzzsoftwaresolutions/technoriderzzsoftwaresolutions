@@ -2,6 +2,17 @@ import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { Calendar, User, ArrowRight, Tag, X, Phone, Mail, MessageSquare } from "lucide-react";
 import { toast } from "sonner";
+import Layout from "@/components/layout/Layout";
+import { HoverCard, HoverCardContent, HoverCardTrigger } from "@/components/ui/hover-card";
+import * as HoverCardPrimitive from "@radix-ui/react-hover-card";
+import { Button } from "@/components/ui/button";
+import { Pencil, Trash2 } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000/api";
 
 interface Blog {
 
@@ -23,11 +34,11 @@ const Blogs = () => {
     name: "", email: "", phone: "", subject: "General Enquiry", message: ""
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [editingBlog, setEditingBlog] = useState<Blog | null>(null);
+  const [isEditOpen, setIsEditOpen] = useState(false);
+  const isAdmin = typeof window !== "undefined" && localStorage.getItem("isAdminAuth") === "true";
 
-
-
-  useEffect(() => {
-    const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000/api";
+  const fetchBlogs = () => {
     fetch(`${API_URL}/blogs`)
       .then((res) => res.json())
       .then((data) => {
@@ -38,6 +49,12 @@ const Blogs = () => {
         console.error("Error fetching blogs:", err);
         setLoading(false);
       });
+  };
+
+
+
+  useEffect(() => {
+    fetchBlogs();
 
     // Popup logic: Show every 5 seconds if not already shown
     const interval = setInterval(() => {
@@ -51,16 +68,57 @@ const Blogs = () => {
     return () => clearInterval(interval);
   }, []);
 
+  const handleDeleteBlog = async (blogId: string, blogTitle: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    e.preventDefault();
+    if (!window.confirm(`Are you sure you want to delete blog "${blogTitle}"?`)) return;
+    try {
+      const res = await fetch(`${API_URL}/blogs/${blogId}`, {
+        method: "DELETE"
+      });
+      if (res.ok) {
+        toast.success("Blog deleted successfully!");
+        fetchBlogs();
+      } else {
+        toast.error("Failed to delete blog.");
+      }
+    } catch (err) {
+      toast.error("Error connecting to server.");
+    }
+  };
 
+  const handleSaveBlog = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingBlog) return;
+    try {
+      const res = await fetch(`${API_URL}/blogs/${editingBlog._id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(editingBlog)
+      });
+      if (res.ok) {
+        toast.success("Blog updated successfully!");
+        setIsEditOpen(false);
+        fetchBlogs();
+      } else {
+        toast.error("Failed to update blog.");
+      }
+    } catch (err) {
+      toast.error("Error connecting to server.");
+    }
+  };
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
-      </div>
+      <Layout>
+        <div className="min-h-screen flex items-center justify-center bg-gray-50">
+          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
+        </div>
+      </Layout>
     );
   }
 
   return (
+    <Layout>
     <div className="min-h-screen bg-gray-50">
       {/* Hero Section */}
       <div className="relative h-[400px] bg-slate-900 overflow-hidden">
@@ -87,50 +145,114 @@ const Blogs = () => {
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             {blogs.map((blog, index) => (
-              <div
-                key={blog._id}
-                style={{ animationDelay: `${index * 100}ms` }}
-                className="bg-white rounded-2xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-300 group flex flex-col animate-in fade-in slide-in-from-bottom-4 fill-mode-both"
-              >
-                <div className="relative h-56 overflow-hidden">
-                  <img
-                    src={blog.thumbnail || "https://images.unsplash.com/photo-1488590528505-98d2b5aba04b?auto=format&fit=crop&w=800&q=80"}
-                    alt={blog.title}
-
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                  />
-                  <div className="absolute top-4 left-4">
-                    {blog.tags && blog.tags[0] && (
-                      <span className="bg-primary text-white text-[10px] font-bold px-3 py-1 rounded-md uppercase tracking-wider">
-                        {blog.tags[0]}
-                      </span>
-                    )}
-                  </div>
-                  <div className="absolute bottom-4 left-4">
-                    <div className="bg-black/70 backdrop-blur-sm text-white text-[10px] p-2 rounded flex flex-col items-center leading-none">
-                       <span className="font-bold">{new Date(blog.createdAt).getDate()}</span>
-                       <span className="uppercase text-[8px]">{new Date(blog.createdAt).toLocaleString('default', { month: 'short' })}</span>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="p-6 flex-1 flex flex-col">
-                  <h2 className="text-lg font-bold mb-3 text-slate-800 group-hover:text-primary transition-colors line-clamp-2 leading-tight">
-                    {blog.title}
-                  </h2>
-                  <p className="text-gray-500 text-sm mb-6 line-clamp-3 leading-relaxed">
-                    {blog.content.replace(/<[^>]*>?/gm, '').substring(0, 120)}...
-                  </p>
-
-                  <div className="mt-auto pt-4 border-t border-gray-100">
-                    <Link
-                      to={`/blogs/${blog._id}`}
-                      className="inline-flex items-center gap-2 text-primary font-bold text-sm hover:gap-3 transition-all"
+              <div key={blog._id} className="relative hover:z-50" style={{ animationDelay: `${index * 100}ms` }}>
+                <HoverCard openDelay={150} closeDelay={150}>
+                  <HoverCardTrigger asChild>
+                    <div
+                      className="bg-white rounded-2xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-300 group flex flex-col animate-in fade-in slide-in-from-bottom-4 fill-mode-both cursor-pointer"
                     >
-                      READ MORE <ArrowRight size={14} strokeWidth={3} />
-                    </Link>
-                  </div>
-                </div>
+                      <div className="relative h-56 overflow-hidden">
+                        <img
+                          src={blog.thumbnail || "https://images.unsplash.com/photo-1488590528505-98d2b5aba04b?auto=format&fit=crop&w=800&q=80"}
+                          alt={blog.title}
+                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                        />
+                        <div className="absolute top-4 left-4">
+                          {blog.tags && blog.tags[0] && (
+                            <span className="bg-primary text-white text-[10px] font-bold px-3 py-1 rounded-md uppercase tracking-wider">
+                              {blog.tags[0]}
+                            </span>
+                          )}
+                        </div>
+                        {isAdmin && (
+                          <div className="absolute top-4 right-4 z-50 flex gap-2">
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                e.preventDefault();
+                                setEditingBlog({ ...blog });
+                                setIsEditOpen(true);
+                              }}
+                              className="bg-amber-500 hover:bg-amber-600 text-white p-2 rounded-full shadow-lg border border-white transition-all hover:scale-105 duration-200"
+                              title="Edit Blog"
+                            >
+                              <Pencil className="h-3.5 w-3.5" />
+                            </button>
+                            <button
+                              onClick={(e) => handleDeleteBlog(blog._id, blog.title, e)}
+                              className="bg-red-500 hover:bg-red-600 text-white p-2 rounded-full shadow-lg border border-white transition-all hover:scale-105 duration-200"
+                              title="Delete Blog"
+                            >
+                              <Trash2 className="h-3.5 w-3.5" />
+                            </button>
+                          </div>
+                        )}
+                        <div className="absolute bottom-4 left-4">
+                          <div className="bg-black/70 backdrop-blur-sm text-white text-[10px] p-2 rounded flex flex-col items-center leading-none">
+                            <span className="font-bold">{new Date(blog.createdAt).getDate()}</span>
+                            <span className="uppercase text-[8px]">{new Date(blog.createdAt).toLocaleString('default', { month: 'short' })}</span>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="p-6 flex-1 flex flex-col">
+                        <h2 className="text-lg font-bold mb-3 text-slate-800 group-hover:text-primary transition-colors line-clamp-2 leading-tight">
+                          {blog.title}
+                        </h2>
+                        <p className="text-gray-500 text-sm mb-6 line-clamp-3 leading-relaxed">
+                          {blog.content.replace(/<[^>]*>?/gm, '').substring(0, 120)}...
+                        </p>
+                        <div className="mt-auto pt-4 border-t border-gray-100">
+                          <Link
+                            to={`/blogs/${blog._id}`}
+                            className="inline-flex items-center gap-2 text-primary font-bold text-sm hover:gap-3 transition-all"
+                          >
+                            READ MORE <ArrowRight size={14} strokeWidth={3} />
+                          </Link>
+                        </div>
+                      </div>
+                    </div>
+                  </HoverCardTrigger>
+
+                  <HoverCardContent side="right" sideOffset={15} className="w-[300px] rounded-xl bg-white border border-slate-200 shadow-2xl p-5 text-slate-800 z-50 text-left">
+                    <HoverCardPrimitive.Arrow className="fill-white stroke-slate-200" width={12} height={6} />
+                    <div className="space-y-3">
+                      <div>
+                        {blog.tags && blog.tags.length > 0 && (
+                          <div className="flex gap-1 flex-wrap mb-2">
+                            {blog.tags.slice(0, 3).map((tag, ti) => (
+                              <span key={ti} className="text-[9px] font-bold bg-rose-100 text-rose-600 px-2 py-0.5 rounded uppercase tracking-wide">
+                                {tag}
+                              </span>
+                            ))}
+                          </div>
+                        )}
+                        <h4 className="font-extrabold text-sm text-slate-900 leading-snug">{blog.title}</h4>
+                      </div>
+
+                      <p className="text-[11px] text-slate-600 leading-relaxed">
+                        {blog.content.replace(/<[^>]*>?/gm, '').substring(0, 200)}...
+                      </p>
+
+                      <div className="flex items-center gap-3 text-[10px] text-slate-500 border-t border-slate-100 pt-2.5">
+                        <div className="flex items-center gap-1">
+                          <User className="h-3 w-3" />
+                          <span>{blog.author || "Techno Riderzz"}</span>
+                        </div>
+                        <div className="flex items-center gap-1">
+                          <Calendar className="h-3 w-3" />
+                          <span>{new Date(blog.createdAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}</span>
+                        </div>
+                      </div>
+
+                      <Link to={`/blogs/${blog._id}`}>
+                        <Button className="w-full bg-rose-600 hover:bg-rose-700 text-white font-extrabold h-10 rounded-lg text-xs mt-1">
+                          Read Full Article →
+                        </Button>
+                      </Link>
+                    </div>
+                  </HoverCardContent>
+                </HoverCard>
               </div>
             ))}
           </div>
@@ -273,7 +395,80 @@ const Blogs = () => {
         </div>
       )}
 
+      {/* Edit Blog Dialog */}
+      <Dialog open={isEditOpen} onOpenChange={setIsEditOpen}>
+        <DialogContent className="max-w-lg w-full rounded-2xl bg-white p-6 shadow-2xl">
+          <DialogHeader>
+            <DialogTitle className="text-xl font-bold text-slate-900">Edit Blog Post</DialogTitle>
+          </DialogHeader>
+          {editingBlog && (
+            <form onSubmit={handleSaveBlog} className="space-y-4 text-left mt-2">
+              <div className="space-y-1">
+                <Label htmlFor="edit-title">Title</Label>
+                <Input
+                  id="edit-title"
+                  type="text"
+                  value={editingBlog.title}
+                  onChange={(e) => setEditingBlog({ ...editingBlog, title: e.target.value })}
+                  required
+                />
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-1">
+                  <Label htmlFor="edit-author">Author</Label>
+                  <Input
+                    id="edit-author"
+                    type="text"
+                    value={editingBlog.author}
+                    onChange={(e) => setEditingBlog({ ...editingBlog, author: e.target.value })}
+                    required
+                  />
+                </div>
+                <div className="space-y-1">
+                  <Label htmlFor="edit-tags">Tags (comma-separated)</Label>
+                  <Input
+                    id="edit-tags"
+                    type="text"
+                    value={editingBlog.tags?.join(", ") || ""}
+                    onChange={(e) => setEditingBlog({ ...editingBlog, tags: e.target.value.split(",").map(t => t.trim()) })}
+                    required
+                  />
+                </div>
+              </div>
+              <div className="space-y-1">
+                <Label htmlFor="edit-thumbnail">Thumbnail URL</Label>
+                <Input
+                  id="edit-thumbnail"
+                  type="text"
+                  value={editingBlog.thumbnail}
+                  onChange={(e) => setEditingBlog({ ...editingBlog, thumbnail: e.target.value })}
+                  required
+                />
+              </div>
+              <div className="space-y-1">
+                <Label htmlFor="edit-content">Content</Label>
+                <Textarea
+                  id="edit-content"
+                  rows={6}
+                  value={editingBlog.content}
+                  onChange={(e) => setEditingBlog({ ...editingBlog, content: e.target.value })}
+                  required
+                />
+              </div>
+              <DialogFooter className="pt-2">
+                <Button type="button" variant="outline" onClick={() => setIsEditOpen(false)}>
+                  Cancel
+                </Button>
+                <Button type="submit" className="bg-rose-600 hover:bg-rose-700 text-white font-bold">
+                  Save Changes
+                </Button>
+              </DialogFooter>
+            </form>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
+    </Layout>
   );
 };
 

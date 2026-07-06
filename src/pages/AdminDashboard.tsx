@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import Layout from "@/components/layout/Layout";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -9,7 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
-import { Plus, Trash2, Save, FolderPlus, BookOpen, Briefcase, Settings, LogOut, Newspaper, Mail } from "lucide-react";
+import { Plus, Trash2, Save, FolderPlus, BookOpen, Briefcase, Settings, LogOut, Newspaper, Mail, Home } from "lucide-react";
 
 import { projectCategories } from "@/data/categories";
 import { socket } from "@/lib/api";
@@ -23,6 +23,13 @@ const AdminDashboard = () => {
   const [internships, setInternships] = useState([]);
   const [blogs, setBlogs] = useState([]);
   const [contacts, setContacts] = useState([]);
+
+  // Editing states
+  const [editingProjectId, setEditingProjectId] = useState(null);
+  const [editingCourseId, setEditingCourseId] = useState(null);
+  const [editingServiceId, setEditingServiceId] = useState(null);
+  const [editingInternshipId, setEditingInternshipId] = useState(null);
+  const [editingBlogId, setEditingBlogId] = useState(null);
 
 
 
@@ -41,14 +48,17 @@ const AdminDashboard = () => {
     title: "", category: "python", selectedCategory: "python", newCategory: "", description: "", thumbnail: "", 
     price: 0, level: "Beginner", duration: "", effort: "", language: "English", certificate: "Yes",
     whatYouLearn: ["", ""], requirements: ["", ""],
-    syllabus: [{ module: "Module 1", lessons: ["Lesson 1"] }]
+    syllabus: [{ module: "Module 1", lessons: ["Lesson 1"] }],
+    rating: 4.5, studentsEnrolled: 0, institution: "Techno Riderzz Academy", subject: "Technology",
+    hasCertificate: true, hasQuizzes: true, extendedDescription: ""
   });
 
   const [internshipForm, setInternshipForm] = useState({
     title: "", category: "mern", selectedCategory: "mern", newCategory: "", description: "", thumbnail: "", 
     internshipType: "Remote", duration: "", price: 0,
     whatYouLearn: ["", ""], requirements: ["", ""], whoThisIsFor: ["", ""], eligibility: "",
-    hasRealTimeProjects: true, hasJobOpportunity: true, hasCertification: true
+    hasRealTimeProjects: true, hasJobOpportunity: true, hasCertification: true,
+    rating: 4.5, studentsEnrolled: 0, institution: "Techno Riderzz Academy", length: "Full-time"
   });
 
   const [serviceForm, setServiceForm] = useState({
@@ -127,14 +137,18 @@ const AdminDashboard = () => {
       const finalCategory = projectForm.selectedCategory === "new" ? projectForm.newCategory : projectForm.selectedCategory;
       const dataToSubmit = { ...projectForm, category: finalCategory };
       
-      const res = await fetch(`${API_URL}/projects`, {
-        method: "POST",
+      const url = editingProjectId ? `${API_URL}/projects/${editingProjectId}` : `${API_URL}/projects`;
+      const method = editingProjectId ? "PUT" : "POST";
+
+      const res = await fetch(url, {
+        method,
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(dataToSubmit)
       });
       if (res.ok) {
-        toast.success("Project added successfully!");
+        toast.success(editingProjectId ? "Project updated successfully!" : "Project added successfully!");
         fetchData();
+        setEditingProjectId(null);
         setProjectForm({
           title: "", code: "", category: "Cyber Security", selectedCategory: "Cyber Security", newCategory: "", domain: "Cyber Security", 
           language: "Python", applicationType: "Web App", description: "", thumbnail: "",
@@ -146,10 +160,10 @@ const AdminDashboard = () => {
         });
       } else {
         const err = await res.json();
-        toast.error(`Error: ${err.message || 'Failed to add project'}`);
+        toast.error(`Error: ${err.message || 'Failed to save project'}`);
       }
     } catch (error) {
-      toast.error("Failed to add project");
+      toast.error("Failed to save project");
     }
   };
 
@@ -159,47 +173,57 @@ const AdminDashboard = () => {
       const finalCategory = courseForm.selectedCategory === "new" ? courseForm.newCategory : courseForm.selectedCategory;
       const dataToSubmit = { ...courseForm, category: finalCategory };
 
-      const res = await fetch(`${API_URL}/courses`, {
-        method: "POST",
+      const url = editingCourseId ? `${API_URL}/courses/${editingCourseId}` : `${API_URL}/courses`;
+      const method = editingCourseId ? "PUT" : "POST";
+
+      const res = await fetch(url, {
+        method,
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(dataToSubmit)
       });
       if (res.ok) {
-        toast.success("Course added successfully!");
+        toast.success(editingCourseId ? "Course updated successfully!" : "Course added successfully!");
         fetchData();
+        setEditingCourseId(null);
         setCourseForm({
           title: "", category: "python", selectedCategory: "python", newCategory: "", description: "", thumbnail: "", 
           price: 0, level: "Beginner", duration: "", effort: "", language: "English", certificate: "Yes",
           whatYouLearn: ["", ""], requirements: ["", ""],
-          syllabus: [{ module: "Module 1", lessons: ["Lesson 1"] }]
+          syllabus: [{ module: "Module 1", lessons: ["Lesson 1"] }],
+          rating: 4.5, studentsEnrolled: 0, institution: "Techno Riderzz Academy", subject: "Technology",
+          hasCertificate: true, hasQuizzes: true, extendedDescription: ""
         });
       } else {
         const err = await res.json();
-        toast.error(`Error: ${err.message || 'Failed to add course'}`);
+        toast.error(`Error: ${err.message || 'Failed to save course'}`);
       }
     } catch (error) {
-      toast.error("Failed to add course");
+      toast.error("Failed to save course");
     }
   };
 
   const handleAddService = async (e) => {
     e.preventDefault();
     try {
-      const res = await fetch(`${API_URL}/services`, {
-        method: "POST",
+      const url = editingServiceId ? `${API_URL}/services/${editingServiceId}` : `${API_URL}/services`;
+      const method = editingServiceId ? "PUT" : "POST";
+
+      const res = await fetch(url, {
+        method,
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(serviceForm)
       });
       if (res.ok) {
-        toast.success("Service added successfully!");
+        toast.success(editingServiceId ? "Service updated successfully!" : "Service added successfully!");
         fetchData();
+        setEditingServiceId(null);
         setServiceForm({ title: "", description: "", iconName: "Code" });
       } else {
         const err = await res.json();
-        toast.error(`Error: ${err.message || 'Failed to add service'}`);
+        toast.error(`Error: ${err.message || 'Failed to save service'}`);
       }
     } catch (error) {
-      toast.error("Failed to add service");
+      toast.error("Failed to save service");
     }
   };
 
@@ -209,49 +233,162 @@ const AdminDashboard = () => {
       const finalCategory = internshipForm.selectedCategory === "new" ? internshipForm.newCategory : internshipForm.selectedCategory;
       const dataToSubmit = { ...internshipForm, category: finalCategory };
 
-      const res = await fetch(`${API_URL}/internships`, {
-        method: "POST",
+      const url = editingInternshipId ? `${API_URL}/internships/${editingInternshipId}` : `${API_URL}/internships`;
+      const method = editingInternshipId ? "PUT" : "POST";
+
+      const res = await fetch(url, {
+        method,
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(dataToSubmit)
       });
       if (res.ok) {
-        toast.success("Internship added successfully!");
+        toast.success(editingInternshipId ? "Internship updated successfully!" : "Internship added successfully!");
         fetchData();
+        setEditingInternshipId(null);
         setInternshipForm({
           title: "", category: "mern", selectedCategory: "mern", newCategory: "", description: "", thumbnail: "", 
           internshipType: "Remote", duration: "", price: 0,
           whatYouLearn: ["", ""], requirements: ["", ""], whoThisIsFor: ["", ""], eligibility: "",
-          hasRealTimeProjects: true, hasJobOpportunity: true, hasCertification: true
+          hasRealTimeProjects: true, hasJobOpportunity: true, hasCertification: true,
+          rating: 4.5, studentsEnrolled: 0, institution: "Techno Riderzz Academy", length: "Full-time"
         });
       } else {
         const err = await res.json();
-        toast.error(`Error: ${err.message || 'Failed to add internship'}`);
+        toast.error(`Error: ${err.message || 'Failed to save internship'}`);
       }
     } catch (error) {
-      toast.error("Failed to add internship");
+      toast.error("Failed to save internship");
     }
   };
 
   const handleAddBlog = async (e) => {
     e.preventDefault();
     try {
-      const res = await fetch(`${API_URL}/blogs`, {
-        method: "POST",
+      const url = editingBlogId ? `${API_URL}/blogs/${editingBlogId}` : `${API_URL}/blogs`;
+      const method = editingBlogId ? "PUT" : "POST";
+
+      const res = await fetch(url, {
+        method,
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(blogForm)
       });
       if (res.ok) {
-        toast.success("Blog post added successfully!");
+        toast.success(editingBlogId ? "Blog post updated successfully!" : "Blog post added successfully!");
         fetchData();
+        setEditingBlogId(null);
         setBlogForm({ title: "", content: "", author: "Admin", thumbnail: "", tags: ["Technology"] });
       } else {
-
         const err = await res.json();
-        toast.error(`Error: ${err.message || 'Failed to add blog'}`);
+        toast.error(`Error: ${err.message || 'Failed to save blog'}`);
       }
     } catch (error) {
-      toast.error("Failed to add blog");
+      toast.error("Failed to save blog");
     }
+  };
+
+  const handleEditProjectClick = (proj) => {
+    setEditingProjectId(proj._id);
+    setProjectForm({
+      title: proj.title || "",
+      code: proj.code || "",
+      category: proj.category || "",
+      selectedCategory: uniqueCategories.includes(proj.category) ? proj.category : "new",
+      newCategory: uniqueCategories.includes(proj.category) ? "" : (proj.category || ""),
+      domain: proj.domain || "",
+      language: proj.language || "",
+      applicationType: proj.applicationType || "Web App",
+      description: proj.description || "",
+      thumbnail: proj.thumbnail || "",
+      images: Array.isArray(proj.images) ? proj.images : [],
+      videoFiles: Array.isArray(proj.videoFiles) ? proj.videoFiles : [],
+      documentation: proj.documentation || "",
+      techStack: {
+        api: proj.techStack?.api || "",
+        framework: proj.techStack?.framework || "",
+        ide: proj.techStack?.ide || "",
+        database: proj.techStack?.database || "",
+        hasDFD: !!proj.techStack?.hasDFD,
+        hasVideos: !!proj.techStack?.hasVideos,
+        hasERDiagram: !!proj.techStack?.hasERDiagram,
+        hasUML: !!proj.techStack?.hasUML,
+        hasPPT: !!proj.techStack?.hasPPT,
+        hasSRS: !!proj.techStack?.hasSRS
+      }
+    });
+  };
+
+  const handleEditCourseClick = (c) => {
+    setEditingCourseId(c._id);
+    setCourseForm({
+      title: c.title || "",
+      category: c.category || "",
+      selectedCategory: uniqueCourseCategories.includes(c.category) ? c.category : "new",
+      newCategory: uniqueCourseCategories.includes(c.category) ? "" : (c.category || ""),
+      description: c.description || "",
+      thumbnail: c.thumbnail || "",
+      price: c.price || 0,
+      level: c.level || "Beginner",
+      duration: c.duration || "",
+      effort: c.effort || "",
+      language: c.language || "English",
+      certificate: c.hasCertificate === false ? "No" : "Yes",
+      whatYouLearn: Array.isArray(c.whatYouLearn) ? c.whatYouLearn : [],
+      requirements: Array.isArray(c.requirements) ? c.requirements : [],
+      syllabus: Array.isArray(c.syllabus) ? c.syllabus : [{ module: "Module 1", lessons: ["Lesson 1"] }],
+      rating: c.rating || 4.5,
+      studentsEnrolled: c.studentsEnrolled || 0,
+      institution: c.institution || "Techno Riderzz Academy",
+      subject: c.subject || "Technology",
+      hasCertificate: c.hasCertificate !== false,
+      hasQuizzes: c.hasQuizzes !== false,
+      extendedDescription: c.extendedDescription || ""
+    });
+  };
+
+  const handleEditServiceClick = (s) => {
+    setEditingServiceId(s._id);
+    setServiceForm({
+      title: s.title || "",
+      description: s.description || "",
+      iconName: s.iconName || "Code"
+    });
+  };
+
+  const handleEditInternshipClick = (i) => {
+    setEditingInternshipId(i._id);
+    setInternshipForm({
+      title: i.title || "",
+      category: i.category || "",
+      selectedCategory: uniqueInternshipCategories.includes(i.category) ? i.category : "new",
+      newCategory: uniqueInternshipCategories.includes(i.category) ? "" : (i.category || ""),
+      description: i.description || "",
+      thumbnail: i.thumbnail || "",
+      internshipType: i.internshipType || "Remote",
+      duration: i.duration || "",
+      price: i.price || 0,
+      whatYouLearn: Array.isArray(i.whatYouLearn) ? i.whatYouLearn : [],
+      requirements: Array.isArray(i.requirements) ? i.requirements : [],
+      whoThisIsFor: Array.isArray(i.whoThisIsFor) ? i.whoThisIsFor : [],
+      eligibility: i.eligibility || "",
+      hasRealTimeProjects: i.hasRealTimeProjects !== false,
+      hasJobOpportunity: i.hasJobOpportunity !== false,
+      hasCertification: i.hasCertification !== false,
+      rating: i.rating || 4.5,
+      studentsEnrolled: i.studentsEnrolled || 0,
+      institution: i.institution || "Techno Riderzz Academy",
+      length: i.length || "Full-time"
+    });
+  };
+
+  const handleEditBlogClick = (b) => {
+    setEditingBlogId(b._id);
+    setBlogForm({
+      title: b.title || "",
+      content: b.content || "",
+      author: b.author || "Admin",
+      thumbnail: b.thumbnail || "",
+      tags: Array.isArray(b.tags) ? b.tags : ["Technology"]
+    });
   };
 
   const handleDeleteBlog = async (id) => {
@@ -317,9 +454,16 @@ const AdminDashboard = () => {
             <h1 className="text-3xl font-bold mb-2">Admin Dashboard</h1>
             <p className="text-slate-400">Manage your website content and track new submissions.</p>
           </div>
-          <Button variant="destructive" onClick={handleLogout} className="flex items-center gap-2">
-            <LogOut className="h-4 w-4" /> Logout
-          </Button>
+          <div className="flex items-center gap-3">
+            <Link to="/">
+              <Button variant="outline" className="flex items-center gap-2 border-slate-700 hover:bg-slate-800 text-white font-bold bg-transparent">
+                <Home className="h-4 w-4" /> View Website
+              </Button>
+            </Link>
+            <Button variant="destructive" onClick={handleLogout} className="flex items-center gap-2 font-bold">
+              <LogOut className="h-4 w-4" /> Logout
+            </Button>
+          </div>
         </div>
       </div>
 
@@ -353,7 +497,7 @@ const AdminDashboard = () => {
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
               <Card className="lg:col-span-1 border-primary/20">
                 <CardHeader>
-                  <CardTitle>Add New Project</CardTitle>
+                  <CardTitle>{editingProjectId ? `Edit Project: ${projectForm.title}` : "Add New Project"}</CardTitle>
                 </CardHeader>
                 <CardContent>
                   <form onSubmit={handleAddProject} className="space-y-4">
@@ -487,7 +631,32 @@ const AdminDashboard = () => {
                         ))}
                       </div>
                     </div>
-                    <Button type="submit" className="w-full"><Plus className="mr-2 h-4 w-4" /> Add Project</Button>
+                    <div className="flex gap-2">
+                      <Button type="submit" className="flex-1">
+                        {editingProjectId ? <Save className="mr-2 h-4 w-4" /> : <Plus className="mr-2 h-4 w-4" />}
+                        {editingProjectId ? "Update Project" : "Add Project"}
+                      </Button>
+                      {editingProjectId && (
+                        <Button 
+                          type="button" 
+                          variant="outline" 
+                          onClick={() => {
+                            setEditingProjectId(null);
+                            setProjectForm({
+                              title: "", code: "", category: "Cyber Security", selectedCategory: "Cyber Security", newCategory: "", domain: "Cyber Security", 
+                              language: "Python", applicationType: "Web App", description: "", thumbnail: "",
+                              images: ["", ""],
+                              techStack: {
+                                api: "", framework: "", ide: "", database: "",
+                                hasDFD: false, hasVideos: false, hasERDiagram: false, hasUML: false, hasPPT: false, hasSRS: false
+                              }
+                            });
+                          }}
+                        >
+                          Cancel
+                        </Button>
+                      )}
+                    </div>
                   </form>
                 </CardContent>
               </Card>
@@ -507,6 +676,14 @@ const AdminDashboard = () => {
                             <td className="px-4 py-3 font-mono text-xs text-primary">{proj.code}</td>
                             <td className="px-4 py-3 font-medium truncate max-w-[300px]">{proj.title}</td>
                             <td className="px-4 py-3 text-right">
+                              <Button 
+                                variant="ghost" 
+                                size="sm" 
+                                onClick={() => handleEditProjectClick(proj)} 
+                                className="text-slate-600 hover:text-slate-900 mr-2"
+                              >
+                                Edit
+                              </Button>
                               <Button 
                                 variant="ghost" 
                                 size="sm" 
@@ -531,7 +708,7 @@ const AdminDashboard = () => {
           <TabsContent value="courses" className="space-y-8">
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
               <Card className="lg:col-span-1 border-primary/20">
-                <CardHeader><CardTitle>Add New Course</CardTitle></CardHeader>
+                <CardHeader><CardTitle>{editingCourseId ? `Edit Course: ${courseForm.title}` : "Add New Course"}</CardTitle></CardHeader>
                 <CardContent>
                   <form onSubmit={handleAddCourse} className="space-y-4">
                     <div className="space-y-2">
@@ -577,6 +754,26 @@ const AdminDashboard = () => {
                       </div>
                       <div className="grid grid-cols-2 gap-4">
                         <div className="space-y-2">
+                          <Label>Rating</Label>
+                          <Input type="number" step="0.1" value={courseForm.rating || 4.5} onChange={(e) => setCourseForm({...courseForm, rating: Number(e.target.value)})} required />
+                        </div>
+                        <div className="space-y-2">
+                          <Label>Students Enrolled</Label>
+                          <Input type="number" value={courseForm.studentsEnrolled || 0} onChange={(e) => setCourseForm({...courseForm, studentsEnrolled: Number(e.target.value)})} required />
+                        </div>
+                      </div>
+                      <div className="grid grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                          <Label>Institution</Label>
+                          <Input value={courseForm.institution || "Techno Riderzz Academy"} onChange={(e) => setCourseForm({...courseForm, institution: e.target.value})} />
+                        </div>
+                        <div className="space-y-2">
+                          <Label>Subject</Label>
+                          <Input value={courseForm.subject || "Technology"} onChange={(e) => setCourseForm({...courseForm, subject: e.target.value})} />
+                        </div>
+                      </div>
+                      <div className="grid grid-cols-2 gap-4">
+                        <div className="space-y-2">
                           <Label>Level</Label>
                           <Input value={courseForm.level} onChange={(e) => setCourseForm({...courseForm, level: e.target.value})} placeholder="Beginner" />
                         </div>
@@ -584,6 +781,20 @@ const AdminDashboard = () => {
                           <Label>Effort</Label>
                           <Input value={courseForm.effort} onChange={(e) => setCourseForm({...courseForm, effort: e.target.value})} placeholder="4-5 hours/day" />
                         </div>
+                      </div>
+                      <div className="grid grid-cols-2 gap-4">
+                        <div className="flex items-center space-x-2 pt-6">
+                          <input type="checkbox" id="course-hasQuizzes" checked={courseForm.hasQuizzes !== false} onChange={(e) => setCourseForm({...courseForm, hasQuizzes: e.target.checked})} className="h-4 w-4" />
+                          <Label htmlFor="course-hasQuizzes">Quizzes Included</Label>
+                        </div>
+                        <div className="flex items-center space-x-2 pt-6">
+                          <input type="checkbox" id="course-hasCertificate" checked={courseForm.hasCertificate !== false} onChange={(e) => setCourseForm({...courseForm, hasCertificate: e.target.checked})} className="h-4 w-4" />
+                          <Label htmlFor="course-hasCertificate">Certificate Included</Label>
+                        </div>
+                      </div>
+                      <div className="space-y-2">
+                        <Label>Extended Description</Label>
+                        <Textarea value={courseForm.extendedDescription || ""} onChange={(e) => setCourseForm({...courseForm, extendedDescription: e.target.value})} placeholder="Detailed, extended overview..." />
                       </div>
                       <div className="grid grid-cols-2 gap-4">
                         <div className="space-y-2">
@@ -617,7 +828,31 @@ const AdminDashboard = () => {
                         <Label>Description</Label>
                         <Textarea value={courseForm.description} onChange={(e) => setCourseForm({...courseForm, description: e.target.value})} required />
                       </div>
-                      <Button type="submit" className="w-full"><Plus className="mr-2 h-4 w-4" /> Add Course</Button>
+                      <div className="flex gap-2">
+                        <Button type="submit" className="flex-1">
+                          {editingCourseId ? <Save className="mr-2 h-4 w-4" /> : <Plus className="mr-2 h-4 w-4" />}
+                          {editingCourseId ? "Update Course" : "Add Course"}
+                        </Button>
+                        {editingCourseId && (
+                          <Button 
+                            type="button" 
+                            variant="outline" 
+                            onClick={() => {
+                              setEditingCourseId(null);
+                              setCourseForm({
+                                title: "", category: "python", selectedCategory: "python", newCategory: "", description: "", thumbnail: "", 
+                                price: 0, level: "Beginner", duration: "", effort: "", language: "English", certificate: "Yes",
+                                whatYouLearn: ["", ""], requirements: ["", ""],
+                                syllabus: [{ module: "Module 1", lessons: ["Lesson 1"] }],
+                                rating: 4.5, studentsEnrolled: 0, institution: "Techno Riderzz Academy", subject: "Technology",
+                                hasCertificate: true, hasQuizzes: true, extendedDescription: ""
+                              });
+                            }}
+                          >
+                            Cancel
+                          </Button>
+                        )}
+                      </div>
                     </form>
                 </CardContent>
               </Card>
@@ -636,6 +871,14 @@ const AdminDashboard = () => {
                             <td className="px-4 py-3 font-medium">{c.title}</td>
                             <td className="px-4 py-3">₹{c.price}</td>
                             <td className="px-4 py-3 text-right">
+                              <Button 
+                                variant="ghost" 
+                                size="sm" 
+                                onClick={() => handleEditCourseClick(c)} 
+                                className="text-slate-600 hover:text-slate-900 mr-2"
+                              >
+                                Edit
+                              </Button>
                               <Button 
                                 variant="ghost" 
                                 size="sm" 
@@ -660,7 +903,7 @@ const AdminDashboard = () => {
           <TabsContent value="services" className="space-y-8">
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
               <Card className="lg:col-span-1 border-primary/20">
-                <CardHeader><CardTitle>Add New Service</CardTitle></CardHeader>
+                <CardHeader><CardTitle>{editingServiceId ? `Edit Service: ${serviceForm.title}` : "Add New Service"}</CardTitle></CardHeader>
                 <CardContent>
                   <form onSubmit={handleAddService} className="space-y-4">
                     <div className="space-y-2">
@@ -675,7 +918,24 @@ const AdminDashboard = () => {
                       <Label>Description</Label>
                       <Textarea value={serviceForm.description} onChange={(e) => setServiceForm({...serviceForm, description: e.target.value})} required />
                     </div>
-                    <Button type="submit" className="w-full"><Plus className="mr-2 h-4 w-4" /> Add Service</Button>
+                    <div className="flex gap-2">
+                      <Button type="submit" className="flex-1">
+                        {editingServiceId ? <Save className="mr-2 h-4 w-4" /> : <Plus className="mr-2 h-4 w-4" />}
+                        {editingServiceId ? "Update Service" : "Add Service"}
+                      </Button>
+                      {editingServiceId && (
+                        <Button 
+                          type="button" 
+                          variant="outline" 
+                          onClick={() => {
+                            setEditingServiceId(null);
+                            setServiceForm({ title: "", description: "", iconName: "Code" });
+                          }}
+                        >
+                          Cancel
+                        </Button>
+                      )}
+                    </div>
                   </form>
                 </CardContent>
               </Card>
@@ -690,14 +950,24 @@ const AdminDashboard = () => {
                           <h4 className="font-bold text-slate-800">{s.title}</h4>
                           <p className="text-sm text-slate-500">{s.description}</p>
                         </div>
-                        <Button 
-                          variant="ghost" 
-                          size="sm" 
-                          onClick={() => handleDeleteItem('service', s._id)} 
-                          className="text-red-500 hover:bg-red-50 hover:text-red-700"
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
+                        <div className="flex items-center gap-2">
+                          <Button 
+                            variant="ghost" 
+                            size="sm" 
+                            onClick={() => handleEditServiceClick(s)} 
+                            className="text-slate-600 hover:text-slate-900"
+                          >
+                            Edit
+                          </Button>
+                          <Button 
+                            variant="ghost" 
+                            size="sm" 
+                            onClick={() => handleDeleteItem('service', s._id)} 
+                            className="text-red-500 hover:bg-red-50 hover:text-red-700"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
                       </div>
                     ))}
                   </div>
@@ -711,7 +981,7 @@ const AdminDashboard = () => {
           <TabsContent value="internships" className="space-y-8">
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
               <Card className="lg:col-span-1 border-primary/20">
-                <CardHeader><CardTitle>Add New Internship</CardTitle></CardHeader>
+                <CardHeader><CardTitle>{editingInternshipId ? `Edit Internship: ${internshipForm.title}` : "Add New Internship"}</CardTitle></CardHeader>
                 <CardContent>
                   <form onSubmit={handleAddInternship} className="space-y-4">
                     <div className="space-y-2">
@@ -749,6 +1019,26 @@ const AdminDashboard = () => {
                         <div className="space-y-2">
                           <Label>Price (₹)</Label>
                           <Input type="number" value={internshipForm.price} onChange={(e) => setInternshipForm({...internshipForm, price: Number(e.target.value)})} required />
+                        </div>
+                      </div>
+                      <div className="grid grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                          <Label>Rating</Label>
+                          <Input type="number" step="0.1" value={internshipForm.rating || 4.5} onChange={(e) => setInternshipForm({...internshipForm, rating: Number(e.target.value)})} required />
+                        </div>
+                        <div className="space-y-2">
+                          <Label>Students Enrolled</Label>
+                          <Input type="number" value={internshipForm.studentsEnrolled || 0} onChange={(e) => setInternshipForm({...internshipForm, studentsEnrolled: Number(e.target.value)})} required />
+                        </div>
+                      </div>
+                      <div className="grid grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                          <Label>Institution</Label>
+                          <Input value={internshipForm.institution || "Techno Riderzz Academy"} onChange={(e) => setInternshipForm({...internshipForm, institution: e.target.value})} />
+                        </div>
+                        <div className="space-y-2">
+                          <Label>Length</Label>
+                          <Input value={internshipForm.length || "Full-time"} onChange={(e) => setInternshipForm({...internshipForm, length: e.target.value})} />
                         </div>
                       </div>
                       <div className="grid grid-cols-2 gap-4">
@@ -806,7 +1096,30 @@ const AdminDashboard = () => {
                         <Label>Description</Label>
                         <Textarea value={internshipForm.description} onChange={(e) => setInternshipForm({...internshipForm, description: e.target.value})} required />
                       </div>
-                      <Button type="submit" className="w-full"><Plus className="mr-2 h-4 w-4" /> Add Internship</Button>
+                      <div className="flex gap-2">
+                        <Button type="submit" className="flex-1">
+                          {editingInternshipId ? <Save className="mr-2 h-4 w-4" /> : <Plus className="mr-2 h-4 w-4" />}
+                          {editingInternshipId ? "Update Internship" : "Add Internship"}
+                        </Button>
+                        {editingInternshipId && (
+                          <Button 
+                            type="button" 
+                            variant="outline" 
+                            onClick={() => {
+                              setEditingInternshipId(null);
+                              setInternshipForm({
+                                title: "", category: "mern", selectedCategory: "mern", newCategory: "", description: "", thumbnail: "", 
+                                internshipType: "Remote", duration: "", price: 0,
+                                whatYouLearn: ["", ""], requirements: ["", ""], whoThisIsFor: ["", ""], eligibility: "",
+                                hasRealTimeProjects: true, hasJobOpportunity: true, hasCertification: true,
+                                rating: 4.5, studentsEnrolled: 0, institution: "Techno Riderzz Academy", length: "Full-time"
+                              });
+                            }}
+                          >
+                            Cancel
+                          </Button>
+                        )}
+                      </div>
                     </form>
                 </CardContent>
               </Card>
@@ -825,6 +1138,14 @@ const AdminDashboard = () => {
                             <td className="px-4 py-3 font-medium">{i.title}</td>
                             <td className="px-4 py-3">{i.internshipType}</td>
                             <td className="px-4 py-3 text-right">
+                              <Button 
+                                variant="ghost" 
+                                size="sm" 
+                                onClick={() => handleEditInternshipClick(i)} 
+                                className="text-slate-600 hover:text-slate-900 mr-2"
+                              >
+                                Edit
+                              </Button>
                               <Button 
                                 variant="ghost" 
                                 size="sm" 
@@ -849,7 +1170,7 @@ const AdminDashboard = () => {
           <TabsContent value="blogs" className="space-y-8">
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
               <Card className="lg:col-span-1 border-primary/20">
-                <CardHeader><CardTitle>Add New Blog Post</CardTitle></CardHeader>
+                <CardHeader><CardTitle>{editingBlogId ? `Edit Blog Post: ${blogForm.title}` : "Add New Blog Post"}</CardTitle></CardHeader>
                 <CardContent>
                   <form onSubmit={handleAddBlog} className="space-y-4">
                     <div className="grid grid-cols-2 gap-4">
@@ -884,9 +1205,25 @@ const AdminDashboard = () => {
                       />
                       <p className="text-[10px] text-slate-500 italic">Pro-tip: Use HTML tags like &lt;p&gt;, &lt;h2&gt;, &lt;b&gt; for formatting.</p>
                     </div>
-                    <Button type="submit" className="w-full bg-primary hover:bg-primary/90 text-white font-bold py-6">
-                       <Plus className="mr-2 h-5 w-5" /> PUBLISH BLOG POST
-                    </Button>
+                    <div className="flex gap-2">
+                      <Button type="submit" className="flex-1 bg-primary hover:bg-primary/90 text-white font-bold py-6">
+                        {editingBlogId ? <Save className="mr-2 h-5 w-5" /> : <Plus className="mr-2 h-5 w-5" />}
+                        {editingBlogId ? "UPDATE BLOG POST" : "PUBLISH BLOG POST"}
+                      </Button>
+                      {editingBlogId && (
+                        <Button 
+                          type="button" 
+                          variant="outline" 
+                          onClick={() => {
+                            setEditingBlogId(null);
+                            setBlogForm({ title: "", content: "", author: "Admin", thumbnail: "", tags: ["Technology"] });
+                          }}
+                          className="py-6 font-bold"
+                        >
+                          Cancel
+                        </Button>
+                      )}
+                    </div>
 
                   </form>
                 </CardContent>
@@ -907,6 +1244,14 @@ const AdminDashboard = () => {
                             <td className="px-4 py-3">{b.author}</td>
                             <td className="px-4 py-3 text-xs text-slate-500">{new Date(b.createdAt).toLocaleDateString()}</td>
                             <td className="px-4 py-3 text-right">
+                              <Button 
+                                variant="ghost" 
+                                size="sm" 
+                                onClick={() => handleEditBlogClick(b)} 
+                                className="text-slate-600 hover:text-slate-900 mr-2"
+                              >
+                                Edit
+                              </Button>
                               <Button variant="ghost" size="sm" onClick={() => handleDeleteBlog(b._id)} className="text-red-500 hover:text-red-700">
                                 <Trash2 className="h-4 w-4" />
                               </Button>

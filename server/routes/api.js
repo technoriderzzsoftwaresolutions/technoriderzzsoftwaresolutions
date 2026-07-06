@@ -49,6 +49,17 @@ router.post('/projects', async (req, res) => {
   }
 });
 
+router.put('/projects/:id', async (req, res) => {
+  try {
+    const updatedProject = await Project.findByIdAndUpdate(req.params.id, req.body, { new: true, upsert: true });
+    req.io.emit('data_updated', { type: 'project' });
+    res.json(updatedProject);
+  } catch (err) {
+    console.error("PUT Project Error:", err);
+    res.status(400).json({ message: err.message });
+  }
+});
+
 router.delete('/projects/:id', async (req, res) => {
   try {
     await Project.findByIdAndDelete(req.params.id);
@@ -87,6 +98,17 @@ router.post('/courses', async (req, res) => {
     req.io.emit('data_updated', { type: 'course' });
     res.status(201).json(newCourse);
   } catch (err) {
+    res.status(400).json({ message: err.message });
+  }
+});
+
+router.put('/courses/:id', async (req, res) => {
+  try {
+    const updatedCourse = await Course.findByIdAndUpdate(req.params.id, req.body, { new: true, upsert: true });
+    req.io.emit('data_updated', { type: 'course' });
+    res.json(updatedCourse);
+  } catch (err) {
+    console.error("PUT Course Error:", err);
     res.status(400).json({ message: err.message });
   }
 });
@@ -133,6 +155,17 @@ router.post('/internships', async (req, res) => {
   }
 });
 
+router.put('/internships/:id', async (req, res) => {
+  try {
+    const updatedInternship = await Internship.findByIdAndUpdate(req.params.id, req.body, { new: true, upsert: true });
+    req.io.emit('data_updated', { type: 'internship' });
+    res.json(updatedInternship);
+  } catch (err) {
+    console.error("PUT Internship Error:", err);
+    res.status(400).json({ message: err.message });
+  }
+});
+
 router.delete('/internships/:id', async (req, res) => {
   try {
     await Internship.findByIdAndDelete(req.params.id);
@@ -161,6 +194,17 @@ router.post('/services', async (req, res) => {
     req.io.emit('data_updated', { type: 'service' });
     res.status(201).json(newService);
   } catch (err) {
+    res.status(400).json({ message: err.message });
+  }
+});
+
+router.put('/services/:id', async (req, res) => {
+  try {
+    const updatedService = await Service.findByIdAndUpdate(req.params.id, req.body, { new: true, upsert: true });
+    req.io.emit('data_updated', { type: 'service' });
+    res.json(updatedService);
+  } catch (err) {
+    console.error("PUT Service Error:", err);
     res.status(400).json({ message: err.message });
   }
 });
@@ -312,6 +356,83 @@ router.delete('/blogs/:id', async (req, res) => {
     res.json({ message: 'Blog deleted' });
   } catch (err) {
     res.status(500).json({ message: err.message });
+  }
+});
+
+// --- ADMIN OTP AUTH ---
+let currentOtp = null;
+let otpExpiry = null;
+
+router.post('/admin/request-otp', async (req, res) => {
+  const { username, password } = req.body;
+  const expectedUser = process.env.ADMIN_USERNAME;
+  const expectedPass = process.env.ADMIN_PASSWORD;
+  if (!expectedUser || !expectedPass) {
+    return res.status(500).json({ success: false, message: "Admin credentials are not configured in the server environment variables." });
+  }
+  if (username === expectedUser && password === expectedPass) {
+    currentOtp = String(Math.floor(100000 + Math.random() * 900000));
+    otpExpiry = Date.now() + 60 * 1000; // 60 seconds
+    console.log("=== [ADMIN LOGIN OTP] ===");
+    console.log(`OTP Generated: ${currentOtp}`);
+    console.log("=========================");
+
+    const receiver = process.env.RECEIVER_EMAIL;
+    if (process.env.SENDER_EMAIL && process.env.SENDER_PASSWORD && receiver) {
+      try {
+        const transporter = nodemailer.createTransport({
+          service: 'gmail',
+          auth: {
+            user: process.env.SENDER_EMAIL,
+            pass: process.env.SENDER_PASSWORD
+          }
+        });
+
+        const mailOptions = {
+          from: process.env.SENDER_EMAIL,
+          to: receiver,
+          subject: "Admin Dashboard Access OTP",
+          html: `
+            <div style="font-family: Arial, sans-serif; padding: 20px; border: 1px solid #eee; border-radius: 8px; max-width: 500px;">
+              <h2 style="color: #333;">Admin Dashboard Access Code</h2>
+              <p>Your One-Time Password (OTP) for admin dashboard login is:</p>
+              <h1 style="color: #e11d48; font-size: 36px; letter-spacing: 4px; font-weight: bold; margin: 20px 0;">${currentOtp}</h1>
+              <p style="font-size: 13px; color: #666;">This OTP is valid for 60 seconds. If you did not request this, please secure your credentials.</p>
+            </div>
+          `
+        };
+
+        await transporter.sendMail(mailOptions);
+        console.log('OTP Email sent to:', receiver);
+      } catch (e) {
+        console.error('Failed to send OTP email:', e.message);
+      }
+    } else {
+      console.warn("Mail configurations missing. Read OTP from server logs above.");
+    }
+
+    return res.json({ success: true, message: "OTP sent to admin email." });
+  } else {
+    return res.status(401).json({ success: false, message: "Invalid credentials." });
+  }
+});
+
+router.post('/admin/verify-otp', (req, res) => {
+  const { otp } = req.body;
+  console.log(`=== [ADMIN VERIFY OTP] ===`);
+  console.log(`Received OTP: ${otp}`);
+  console.log(`Expected OTP: ${currentOtp}`);
+  console.log(`Time Left: ${otpExpiry ? Math.round((otpExpiry - Date.now()) / 1000) : 0}s`);
+  console.log(`=========================`);
+  if (!currentOtp || !otpExpiry || Date.now() > otpExpiry) {
+    return res.status(400).json({ success: false, message: "OTP has expired or was not requested. Please try again." });
+  }
+  if (String(otp) === String(currentOtp)) {
+    currentOtp = null;
+    otpExpiry = null;
+    return res.json({ success: true, message: "OTP verified successfully." });
+  } else {
+    return res.status(400).json({ success: false, message: "Invalid OTP. Please try again." });
   }
 });
 

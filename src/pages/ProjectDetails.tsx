@@ -79,8 +79,26 @@ const ProjectDetails = () => {
     { label: "SRS", value: "", available: project.techStack.hasSRS },
   ];
 
+  const jsonLd = {
+    "@context": "https://schema.org",
+    "@type": "SoftwareSourceCode",
+    "name": project.title,
+    "description": project.description || "Academic project by Techno Riderzz",
+    "programmingLanguage": project.language,
+    "codeRepository": project.code || "https://github.com/technoriderzz",
+    "applicationCategory": project.applicationType,
+    "runtimePlatform": project.techStack?.framework || "",
+    "author": {
+      "@type": "Organization",
+      "name": "Techno Riderzz"
+    }
+  };
+
   return (
     <Layout>
+      <script type="application/ld+json">
+        {JSON.stringify(jsonLd)}
+      </script>
       {/* Breadcrumb */}
       <div className="bg-muted/30 py-4">
         <div className="container">

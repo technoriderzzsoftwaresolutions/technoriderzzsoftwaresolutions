@@ -1,6 +1,7 @@
 import mongoose from 'mongoose';
 
 const CourseSchema = new mongoose.Schema({
+  _id: { type: String, default: () => new mongoose.Types.ObjectId().toString() },
   title: { type: String, required: true },
   category: { type: String, default: "python" },
   description: { type: String, required: true },

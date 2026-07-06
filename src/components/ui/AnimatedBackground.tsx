@@ -16,11 +16,11 @@ const AnimatedBackground = () => {
 
   useEffect(() => {
     const colors = [
-      "hsl(45 93% 47% / 0.1)",
-      "hsl(45 93% 55% / 0.08)",
-      "hsl(199 89% 48% / 0.06)",
-      "hsl(262 83% 58% / 0.05)",
-      "hsl(142 71% 45% / 0.06)",
+      "hsl(346.8 77.2% 49.8% / 0.05)",
+      "hsl(350 80% 60% / 0.04)",
+      "hsl(320 84% 61% / 0.04)",
+      "hsl(262 83% 58% / 0.03)",
+      "hsl(142 71% 45% / 0.03)",
     ];
 
     const shapeTypes: ("circle" | "square" | "triangle")[] = ["circle", "square", "triangle"];

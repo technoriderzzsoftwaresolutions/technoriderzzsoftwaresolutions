@@ -4,7 +4,7 @@ import Layout from "@/components/layout/Layout";
 import ProjectCard from "@/components/ProjectCard";
 import { projects as staticProjects } from "@/data/projects";
 import { getCategoryById } from "@/data/categories";
-import { fetchProjects, socket } from "@/lib/api";
+import { fetchProjects, addProject, socket } from "@/lib/api";
 import { ChevronRight, Plus, Upload } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
@@ -31,8 +31,16 @@ const ProjectsCategory = () => {
 
   const loadProjects = async () => {
     try {
-      const apiProjects = await fetchProjects();
-      if (apiProjects) setProjects([...staticProjects, ...apiProjects]);
+      const apiProjects = await fetchProjects(category);
+      if (apiProjects) {
+        const merged = staticProjects.map(staticItem => {
+          const apiItem = apiProjects.find(api => String(api.id || api._id) === String(staticItem.id));
+          return apiItem ? { ...staticItem, ...apiItem } : staticItem;
+        });
+        const staticIds = new Set(staticProjects.map(s => String(s.id)));
+        const newApiItems = apiProjects.filter(api => !staticIds.has(String(api.id || api._id)));
+        setProjects([...merged, ...newApiItems]);
+      }
     } catch (err) { console.error(err); }
   };
 
@@ -45,15 +53,10 @@ const ProjectsCategory = () => {
   const handleAddProject = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      const res = await fetch(`${import.meta.env.VITE_API_URL || "http://localhost:5000/api"}/projects`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(newProject)
-      });
-      if (res.ok) {
+      const success = await addProject(newProject);
+      if (success) {
         toast.success("Project added successfully!");
         setIsDialogOpen(false);
-        // Reset form...
       } else {
         toast.error("Failed to add project.");
       }

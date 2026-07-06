@@ -74,8 +74,27 @@ const CourseDetails = () => {
 
   const totalLessons = course.syllabus.reduce((acc, section) => acc + section.topics.length, 0);
 
+  const jsonLd = {
+    "@context": "https://schema.org",
+    "@type": "Course",
+    "name": course.title,
+    "description": course.description || "Academy course by Techno Riderzz",
+    "provider": {
+      "@type": "Organization",
+      "name": "Techno Riderzz",
+      "sameAs": "https://technoriderzz.com"
+    },
+    "courseCode": course.id,
+    "educationalLevel": course.level,
+    "hasCredential": course.hasCertificate ? "true" : "false",
+    "inLanguage": course.language
+  };
+
   return (
     <Layout>
+      <script type="application/ld+json">
+        {JSON.stringify(jsonLd)}
+      </script>
       {/* Hero Section */}
       <div className="bg-gradient-to-r from-gray-900 to-gray-800 text-white py-12">
         <div className="container">

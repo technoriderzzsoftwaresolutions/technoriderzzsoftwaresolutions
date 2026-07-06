@@ -40,11 +40,7 @@ const InternshipDetails = () => {
       }
     };
     
-    if (!internships.find((i) => i.id === id)) {
-      loadInternship();
-    } else {
-      setLoading(false);
-    }
+    loadInternship();
   }, [id]);
 
   if (loading && !internship) {
@@ -82,8 +78,44 @@ const InternshipDetails = () => {
     { icon: Award, label: "Certificate", value: internship.hasCertification ? "Yes" : "No" },
   ];
 
+  const jsonLd = {
+    "@context": "https://schema.org",
+    "@type": "JobPosting",
+    "title": internship.title,
+    "description": internship.description || "Certified internship by Techno Riderzz",
+    "datePosted": "2026-06-01",
+    "validThrough": "2026-12-31",
+    "employmentType": "INTERN",
+    "hiringOrganization": {
+      "@type": "Organization",
+      "name": "Techno Riderzz",
+      "sameAs": "https://technoriderzz.com"
+    },
+    "jobLocation": {
+      "@type": "Place",
+      "address": {
+        "@type": "PostalAddress",
+        "addressLocality": "Hyderabad",
+        "addressRegion": "Telangana",
+        "addressCountry": "IN"
+      }
+    },
+    "baseSalary": {
+      "@type": "MonetaryAmount",
+      "currency": "INR",
+      "value": {
+        "@type": "QuantitativeValue",
+        "value": 0,
+        "unitText": "MONTH"
+      }
+    }
+  };
+
   return (
     <Layout>
+      <script type="application/ld+json">
+        {JSON.stringify(jsonLd)}
+      </script>
       {/* Hero Section */}
       <div className="bg-gradient-to-r from-gray-900 to-gray-800 text-white py-12">
         <div className="container">

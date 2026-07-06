@@ -1,113 +1,225 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { 
-  Search, ArrowRight, Code, Database, Brain, Cpu, 
-  Smartphone, Coffee, Cloud, Twitter, Globe, FileCode, Users, ChevronLeft, ChevronRight,
-  FileText,
-  Laptop
+  ArrowRight, ShieldCheck, Award, Zap,
+  ChevronRight, Calendar, User, Search, BookOpen, Terminal, Sparkles,
+  Code, Cpu, Smartphone, Server, Database, Cloud
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import Layout from "@/components/layout/Layout";
 import ProjectCard from "@/components/ProjectCard";
 import { projects as staticProjects } from "@/data/projects";
-import { categories } from "@/data/categories";
-import { fetchProjects, fetchServices, socket } from "@/lib/api";
+import { fetchProjects, socket } from "@/lib/api";
 import HighlightText from "@/components/ui/HighlightText";
 import AnimatedText from "@/components/ui/AnimatedText";
 import {
-  Carousel,
-  CarouselContent,
-  CarouselItem,
-  CarouselNext,
-  CarouselPrevious,
-} from "@/components/ui/carousel";
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
+import { HoverCard, HoverCardContent, HoverCardTrigger } from "@/components/ui/hover-card";
 
-import DatabaseDesign from "../assets/SystemDesign.png"
-import MobileApp from "../assets/MobileAppDevelopment.avif"
-import WebApplication from "../assets/WebApplicationDevelopment.jpg"
-import CloudSolutions from "../assets/CloudSolutions.webp"
-import MachineLearning from "../assets/MachineLearning.jpg"
-import ProjectDocumentation from "../assets/ProjectDocumentation.jpg"
+// Phase 2 components
+import UniversalSearch from "@/components/UniversalSearch";
+import EcosystemSection from "@/components/EcosystemSection";
+import TrendingTech from "@/components/TrendingTech";
+import StatsCounter from "@/components/StatsCounter";
+import PartnerMarquee from "@/components/PartnerMarquee";
+import ResearchHubSection from "@/components/ResearchHubSection";
+import WorkshopsSection from "@/components/WorkshopsSection";
+import OpportunityShelf from "@/components/OpportunityShelf";
 
+// Interactive 3D Canvas
+import Interactive3DCanvas from "@/components/ui/Interactive3DCanvas";
+import HeroDashboard3D from "@/components/ui/HeroDashboard3D";
+import TerrainMesh from "@/components/ui/TerrainMesh";
+import ParticleNetwork from "@/components/ui/ParticleNetwork";
 
-const iconMap: Record<string, any> = {
-  Code, Database, Brain, Cpu, Smartphone, Coffee, Cloud, Twitter, Globe
-};
+interface Blog {
+  _id: string;
+  title: string;
+  category: string;
+  createdAt: string;
+}
 
-const staticServices = [
+interface FAQItem {
+  id: string;
+  question: string;
+  answer: string;
+}
+
+const defaultFAQs: FAQItem[] = [
   {
-    title: "Custom Project Development",
-    description: "Tailored projects in Python, Java, .NET, PHP, and more to meet your specific needs.",
-    image: "https://images.unsplash.com/photo-1517694712202-14dd9538aa97?q=80&w=2070&auto=format&fit=crop",
-    icon: Code
+    id: "faq-1",
+    question: "Does Techno Riderzz provide the complete source code for academic projects?",
+    answer: "Yes! Every project package includes the full, clean source code, database scripts, detailed project documentation (like DFD, UML diagrams, and presentation slides), and expert installation/setup instructions."
   },
   {
-    title: "Database Design & Development",
-    description: "Professional ER diagrams, normalization, and implementation in MySQL, PostgreSQL, and MongoDB.",
-    image: DatabaseDesign,
-    icon: Database
+    id: "faq-2",
+    question: "Are the internship and training certificates verified?",
+    answer: "Absolutely. All certificates issued by Techno Riderzz Software Solutions are ISO 9001:2015 certified. Each certificate contains a unique verification QR code and URL that colleges or potential recruiters can use to validate online."
   },
   {
-    title: "Mobile App Development",
-    description: "Native and cross-platform apps for Android and iOS using Flutter, React Native, and Kotlin.",
-    image: MobileApp,
-    icon: Smartphone
+    id: "faq-3",
+    question: "Can I choose a customized topic for my final year major project?",
+    answer: "Yes, you can! Our technical mentors can help you customize existing IEEE papers or design a completely new project scope based on your specific university requirements or domain interests (AI, Web, IoT, etc.)."
   },
   {
-    title: "Web Application Development",
-    description: "Full-stack web development using React, Angular, Django, Node.js, and ASP.NET.",
-    image: WebApplication,
-    icon: Globe
+    id: "faq-4",
+    question: "What are the benefits of college partnerships through CollegeHub?",
+    answer: "College partnerships enable institutes to organize centralized workshops and Faculty Development Programs (FDPs) at cost-effective rates. It also provides colleges with direct dashboard access to monitor student internship completion and project milestones."
   },
   {
-    title: "Machine Learning Projects",
-    description: "AI development including predictive models, NLP, computer vision, and deep learning.",
-    image: MachineLearning,
-    icon: Brain
-  },
-  {
-    title: "Cloud Solutions",
-    description: "AWS, Azure, and Google Cloud projects with deployment and scaling services.",
-    image: CloudSolutions,
-    icon: Cloud
-  },
-  {
-    title: "Project Documentation",
-    description: "Complete documentation including SRS, DFD, UML, ER diagrams, and presentation slides.",
-    image: ProjectDocumentation,
-    icon: FileText
-  },
-  {
-    title: "Technical Training",
-    description: "Hands-on project experience and training programs in the latest technologies.",
-    image: "https://images.unsplash.com/photo-1524178232363-1fb2b075b655?q=80&w=2070&auto=format&fit=crop",
-    icon: Laptop
+    id: "faq-5",
+    question: "What type of internships are available, and do they offer job opportunities?",
+    answer: "We offer remote, hybrid, and on-site internship programs in MERN Stack, Python & Machine Learning, Java, and Android. Outstanding performers receive direct placement referrals (Pre-Placement Offers - PPO) with our partner network."
   }
 ];
 
+// Custom Authentic Brand SVG Logos (Stripe-style)
+const ReactLogo = () => (
+  <svg viewBox="-11.5 -10.23174 23 20.46348" className="h-7 w-7 select-none pointer-events-none">
+    <circle r="2" fill="#61dafb" />
+    <g stroke="#61dafb" strokeWidth="1.2" fill="none">
+      <ellipse rx="11" ry="4.2" />
+      <ellipse rx="11" ry="4.2" transform="rotate(60)" />
+      <ellipse rx="11" ry="4.2" transform="rotate(120)" />
+    </g>
+  </svg>
+);
 
-const Index = () => {
-  const [searchQuery, setSearchQuery] = useState("");
-  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
-  const searchRef = useRef<HTMLDivElement>(null);
+const PythonLogo = () => (
+  <svg viewBox="0 0 24 24" className="h-7 w-7 select-none pointer-events-none" fill="currentColor">
+    <path d="M14.25.18a.06.06 0 0 0-.07 0l-3.5 1.5a.06.06 0 0 0-.03.05v2.52a.06.06 0 0 0 .06.06h3.54c.78 0 1.4.63 1.4 1.4v3.54a.06.06 0 0 0 .06.06h2.52a.06.06 0 0 0 .05-.03l1.5-3.5a.06.06 0 0 0 0-.07l-2.52-5.04a.06.06 0 0 0-.05-.03H14.25z" fill="#3776AB" />
+    <path d="M9.75 23.82a.06.06 0 0 0 .07 0l3.5-1.5a.06.06 0 0 0 .03-.05v-2.52a.06.06 0 0 0-.06-.06H9.7c-.78 0-1.4-.63-1.4-1.4v-3.54a.06.06 0 0 0-.06-.06H5.72a.06.06 0 0 0-.05.03l-1.5 3.5a.06.06 0 0 0 0 .07l2.52 5.04a.06.06 0 0 0 .05.03h3.01z" fill="#FFE873" />
+  </svg>
+);
+
+const TensorFlowLogo = () => (
+  <svg viewBox="0 0 24 24" className="h-7 w-7 select-none pointer-events-none" fill="none">
+    <path d="M12 2L2 7.5v11L12 24l10-5.5v-11L12 2zm-1 19.3v-6.5l-6-3.3v-2.2l6 3.3v-6l6 3.3v6l-6-3.3v6.5l6 3.3v-6.5z" fill="#FF6F00" />
+  </svg>
+);
+
+const NodeJSLogo = () => (
+  <svg viewBox="0 0 24 24" className="h-7 w-7 select-none pointer-events-none" fill="currentColor">
+    <path d="M12 2.5a.75.75 0 0 0-.375.1l-7.75 4.5a.75.75 0 0 0-.375.65v9a.75.75 0 0 0 .375.65l7.75 4.5a.75.75 0 0 0 .75 0l7.75-4.5a.75.75 0 0 0 .375-.65v-9a.75.75 0 0 0-.375-.65l-7.75-4.5A.75.75 0 0 0 12 2.5zm-6.5 6l5.5-3.2v6.4L5.5 14.9V8.5zm13 0v6.4l-5.5-3.2V5.3l5.5 3.2z" fill="#339933" />
+  </svg>
+);
+
+const DockerLogo = () => (
+  <svg viewBox="0 0 24 24" className="h-7 w-7 select-none pointer-events-none" fill="currentColor">
+    <path d="M13.983 8.878h-1.666V7.21h1.666v1.668zm2.083-2.083h-1.667v1.666h1.667V6.795zm-2.083 0h-1.666v1.666h1.666V6.795zm-2.083 0H10.23v1.666h1.666V6.795zm-2.083 0H8.147v1.666h1.667V6.795zm-2.083 0H6.064v1.666h1.667V6.795zm2.083-2.083H10.23V4.38h1.666v2.332zm2.083 0h-1.666V4.38h1.666v2.332zm2.083 0h-1.667V4.38h1.667v2.332zM23.99 12.38c-.035-.116-.27-.426-.966-.426-.412 0-.806.136-1.127.32a.11.11 0 0 1-.157-.038C20.655 10.63 19.34 9.53 17.5 9.53c-2.3 0-4.1 1.7-4.1 3.8h-3c0-2.1-1.8-3.8-4.1-3.8-1.5 0-2.8.75-3.6 1.95a.15.15 0 0 1-.22.02c-.37-.32-.86-.5-1.37-.5-.95 0-1.8.63-2 1.57A6.47 6.47 0 0 0 0 13.96v1c0 3.2 2.6 5.8 5.8 5.8h11.2c2.9 0 5.4-2.1 5.9-5 .45-.25 1-.6 1.15-1.55a.8.8 0 0 0-.06-.83z" fill="#2496ED" />
+  </svg>
+);
+
+const MongoDBLogo = () => (
+  <svg viewBox="0 0 24 24" className="h-7 w-7 select-none pointer-events-none" fill="currentColor">
+    <path d="M12 .5a12.5 12.5 0 0 0-4.5 12.5c0 4.5 4.5 10.5 4.5 10.5s4.5-6 4.5-10.5A12.5 12.5 0 0 0 12 .5zm-1 6.5c0-.5.5-1 .5-1s.5.5.5 1v6c0 .5-.5 1-.5 1s-.5-.5-.5-1V7z" fill="#47A248" />
+  </svg>
+);
+
+const DjangoLogo = () => (
+  <div className="text-emerald-500 font-serif font-black text-xl tracking-tight select-none pointer-events-none">django</div>
+);
+
+const FlutterLogo = () => (
+  <svg viewBox="0 0 24 24" className="h-7 w-7 select-none pointer-events-none" fill="currentColor">
+    <path d="M14.314 0L2.3 12 6 15.7 18.014 3.7zM21.7 12L12 21.7l-3.7-3.7 9.7-9.7z" fill="#02569B" />
+  </svg>
+);
+
+const AWSLogo = () => (
+  <div className="text-[#FF9900] font-sans font-black text-lg tracking-wider select-none pointer-events-none">aws</div>
+);
+
+const techDetails: Record<string, { desc: string, projects: string, difficulty: string, role: string }> = {
+  "React / Next.js": {
+    desc: "Build highly interactive, dynamic, and component-driven user interfaces. Next.js offers server-side pre-rendering and dynamic hydration for 100% crawlable search authority.",
+    projects: "4,200+ Projects",
+    difficulty: "Intermediate",
+    role: "Frontend Developer"
+  },
+  "Python / PyTorch": {
+    desc: "Train deep neural networks, design computer vision classifiers, and develop complex AI architectures. PyTorch provides flexible graph computation.",
+    projects: "5,600+ Projects",
+    difficulty: "Advanced",
+    role: "AI Research Engineer"
+  },
+  "TensorFlow / AI": {
+    desc: "Develop production-ready machine learning models, image recognition systems, and sequential prediction algorithms with TensorFlow's scalable pipeline.",
+    projects: "3,400+ Projects",
+    difficulty: "Advanced",
+    role: "Machine Learning Engineer"
+  },
+  "Node.js / Express": {
+    desc: "Architect scalable server-side microservices, handle concurrent web socket connections, and build high-performance RESTful APIs.",
+    projects: "2,800+ Projects",
+    difficulty: "Intermediate",
+    role: "Backend Engineer"
+  },
+  "Docker / K8s": {
+    desc: "Containerize applications to ensure identical dev-to-prod runtime environments. Orchestrate microservices at scale using Kubernetes clusters.",
+    projects: "1,200+ Projects",
+    difficulty: "Advanced",
+    role: "DevOps Engineer"
+  },
+  "MongoDB / SQL": {
+    desc: "Design flexible JSON-like document databases with MongoDB or structured relational tables with SQL. Optimize query speeds using indexation.",
+    projects: "3,100+ Projects",
+    difficulty: "Intermediate",
+    role: "Database Administrator"
+  },
+  "Django / Flask": {
+    desc: "Leverage Python's robust libraries to design complete web platforms rapidly. Django includes a built-in admin dashboard and ORM out of the box.",
+    projects: "1,850+ Projects",
+    difficulty: "Intermediate",
+    role: "Full Stack Engineer"
+  },
+  "Flutter / Dart": {
+    desc: "Write once, run anywhere. Compile high-performance, native-speed mobile applications for both iOS and Android from a single Dart codebase.",
+    projects: "2,100+ Projects",
+    difficulty: "Intermediate",
+    role: "Mobile App Developer"
+  },
+  "AWS Cloud": {
+    desc: "Deploy serverless Lambda functions, scale computing power dynamically with EC2, store assets securely on S3 buckets, and deliver global assets via CloudFront.",
+    projects: "1,500+ Projects",
+    difficulty: "Advanced",
+    role: "Cloud Architect"
+  }
+};
+
+const technologies = [
+  { name: "React / Next.js", icon: ReactLogo, slug: "mern" },
+  { name: "Python / PyTorch", icon: PythonLogo, slug: "python" },
+  { name: "TensorFlow / AI", icon: TensorFlowLogo, slug: "python" },
+  { name: "Node.js / Express", icon: NodeJSLogo, slug: "mern" },
+  { name: "Docker / K8s", icon: DockerLogo, slug: "mern" },
+  { name: "MongoDB / SQL", icon: MongoDBLogo, slug: "mern" },
+  { name: "Django / Flask", icon: DjangoLogo, slug: "python" },
+  { name: "Flutter / Dart", icon: FlutterLogo, slug: "flutter" },
+  { name: "AWS Cloud", icon: AWSLogo, slug: "mern" },
+];
+
+export default function Index() {
   const [projects, setProjects] = useState(staticProjects);
-  const [services, setServices] = useState(staticServices);
+  const [blogs, setBlogs] = useState<Blog[]>([]);
+  const [faqQuery, setFaqQuery] = useState("");
+  const [filteredFAQs, setFilteredFAQs] = useState<FAQItem[]>(defaultFAQs);
 
   const loadData = async () => {
     try {
-      const [apiProjects, apiServices] = await Promise.all([
-        fetchProjects(),
-        fetchServices()
-      ]);
-      if (apiProjects) setProjects([...staticProjects, ...apiProjects]);
-      if (apiServices && apiServices.length > 0) {
-        const mappedServices = apiServices.map(s => ({
-          ...s,
-          image: "https://images.unsplash.com/photo-1517694712202-14dd9538aa97?q=80&w=2070&auto=format&fit=crop",
-          icon: iconMap[s.iconName] || Code
-        }));
-        setServices([...staticServices, ...mappedServices]);
+      const apiProjects = await fetchProjects().catch(() => []);
+      if (apiProjects && apiProjects.length > 0) {
+        setProjects([...staticProjects, ...apiProjects]);
+      }
+      
+      const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000/api";
+      const blogRes = await fetch(`${API_URL}/blogs`).then(res => res.json()).catch(() => []);
+      if (Array.isArray(blogRes)) {
+        setBlogs(blogRes.slice(0, 3)); // Display latest 3 blogs
       }
     } catch (err) {
       console.error("Data load error:", err);
@@ -117,705 +229,184 @@ const Index = () => {
   useEffect(() => {
     loadData();
     socket.on("data_updated", (data) => {
-      console.log("Real-time update received:", data);
       loadData();
     });
     return () => { socket.off("data_updated"); };
   }, []);
 
-  // Filter projects based on input (minimum 3 characters)
-  const filteredResults = projects.filter((project) => {
-    const query = searchQuery.toLowerCase();
-    return (
-      query.length >= 3 && (
-        project.title.toLowerCase().includes(query) ||
-        project.domain.toLowerCase().includes(query) ||
-        project.language.toLowerCase().includes(query) ||
-        project.techStack.framework?.toLowerCase().includes(query)
-      )
-    );
-  }).slice(0, 6); // Limit results for the dropdown
-
-  // Popular projects for the bottom section
-  const popularProjects = projects.slice(0, 9);
-
-  // Close dropdown when clicking outside the search area
+  // Filter FAQs in real-time
   useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (searchRef.current && !searchRef.current.contains(event.target as Node)) {
-        setIsDropdownOpen(false);
+    const query = faqQuery.toLowerCase().trim();
+    if (!query) {
+      setFilteredFAQs(defaultFAQs);
+    } else {
+      const filtered = defaultFAQs.filter(
+        faq => faq.question.toLowerCase().includes(query) || faq.answer.toLowerCase().includes(query)
+      );
+      setFilteredFAQs(filtered);
+    }
+  }, [faqQuery]);
+
+  // Page level SEO & JSON-LD schema injection
+  useEffect(() => {
+    document.title = "Techno Riderzz | Central Student Technology Ecosystem";
+    const metaDesc = document.querySelector('meta[name="description"]');
+    if (metaDesc) {
+      metaDesc.setAttribute("content", "Discover projects with source code, certified internships, courses, and guidance for research publications from India's central student technology ecosystem.");
+    }
+
+    // Dynamic JSON-LD injection
+    const schema = {
+      "@context": "https://schema.org",
+      "@type": "WebSite",
+      "name": "Techno Riderzz",
+      "alternateName": "Techno Riderzz EdTech platform",
+      "url": window.location.origin,
+      "potentialAction": {
+        "@type": "SearchAction",
+        "target": `${window.location.origin}/?search={search_term_string}`,
+        "query-input": "required name=search_term_string"
       }
     };
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
+    
+    const scriptId = "jsonld-schema-website";
+    let script = document.getElementById(scriptId) as HTMLScriptElement;
+    if (!script) {
+      script = document.createElement("script");
+      script.id = scriptId;
+      script.type = "application/ld+json";
+      document.head.appendChild(script);
+    }
+    script.text = JSON.stringify(schema);
+    
+    return () => {
+      const scriptToRemove = document.getElementById(scriptId);
+      if (scriptToRemove) scriptToRemove.remove();
+    };
   }, []);
 
-  const [currentSlide, setCurrentSlide] = useState(0);
-
-  // Auto-slide every 5 seconds
-  useEffect(() => {
-    const timer = setInterval(() => {
-      setCurrentSlide((prev) => (prev === services.length - 1 ? 0 : prev + 1));
-    }, 5000);
-    return () => clearInterval(timer);
-  }, []);
+  const popularProjects = projects.slice(0, 3);
 
   return (
     <Layout>
-      {/* Hero Section */}
-<section className="relative h-[650px] md:h-[750px] w-full overflow-hidden flex items-center bg-slate-900">
-  {/* Background Slides Layer */}
-  {services.map((service, index) => {
-    const isBgActive = index === currentSlide;
-    return (
-      <div
-        key={index}
-        className={`absolute inset-0 transition-opacity duration-1500 ease-in-out ${
-          isBgActive ? "opacity-100 z-10" : "opacity-0 z-0"
-        }`}
-      >
-        <div
-          className={`absolute inset-0 bg-cover bg-center transition-transform duration-6000 ease-out ${
-            isBgActive ? "scale-105" : "scale-125"
-          }`}
-          style={{ backgroundImage: `url(${service.image})` }}
-        />
-        <div className="absolute inset-0 bg-gradient-to-b from-black/20 via-black/40 to-slate-950" />
-      </div>
-    );
-  })}
+      {/* 1. Hero Section (Centered Layout with Stripe-like 3D Canvas & Udemy-like Search focus) */}
+      <section className="relative w-full overflow-hidden pt-10 md:pt-14 pb-8 md:pb-12 border-b border-slate-200/60" style={{ background: "linear-gradient(to bottom, #1e40af 0%, #2b4c9e 40%, #ffffff 100%)" }}>
+        
+        {/* Interactive 3D Canvas globe backdrop (perfectly centered, faint watermark logo) */}
+        <Interactive3DCanvas isHeroBackground={true} />
 
-  {/* Main Content Layer */}
-  <div className="container mx-auto px-4 relative z-20 text-center flex flex-col items-center">
-    
-    {/* 1. Animated Badge (Top) */}
-    <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/10 backdrop-blur-md border border-white/20 text-white text-sm mb-12">
-      <span className="flex h-2 w-2 rounded-full bg-blue-500 animate-pulse" />
-      Our Professional Services
-    </div>
+        {/* Particle network constellation — glowing dots + connecting lines */}
+        <ParticleNetwork />
 
-    {/* 2. Search Container (Now in the Center) */}
-    <div className="max-w-2xl w-full mx-auto relative mb-16" ref={searchRef}>
-      <div className="relative group">
-        <Input
-          type="text"
-          placeholder="Search projects (e.g., 'Python', 'Web App')..."
-          value={searchQuery}
-          onFocus={() => setIsDropdownOpen(true)}
-          onChange={(e) => {
-            setSearchQuery(e.target.value);
-            setIsDropdownOpen(true);
-          }}
-          className="h-16 pl-14 pr-4 text-lg rounded-full bg-white/95 border-0 shadow-2xl focus-visible:ring-2 ring-primary/50"
-        />
-        <Search className="absolute left-5 top-1/2 -translate-y-1/2 h-6 w-6 text-muted-foreground" />
-        <Button className="absolute right-2 top-1/2 -translate-y-1/2 rounded-full h-12 px-8 hidden sm:flex bg-primary hover:bg-primary/90 text-white">
-          Search
-        </Button>
-      </div>
-
-      {/* Floating Search Results Dropdown */}
-      {isDropdownOpen && searchQuery.length >= 3 && (
-        <div className="absolute top-full mt-3 w-full bg-white rounded-2xl shadow-2xl border border-slate-200 z-[100] overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200">
-          <div className="max-h-[420px] overflow-y-auto p-2">
-            {filteredResults.length > 0 ? (
-              <>
-                <div className="px-3 py-2 text-xs font-semibold text-muted-foreground uppercase tracking-wider text-left">
-                  Found {filteredResults.length} Matching Projects
-                </div>
-                {filteredResults.map((project) => (
-                  <Link 
-                    key={project.id || (project as any)._id} 
-                    to={`/project/${project.id || (project as any)._id}`}
-                    className="flex items-center gap-4 p-3 hover:bg-slate-50 rounded-xl transition-colors group"
-                  >
-                    <div className="h-10 w-10 rounded-lg bg-primary/5 flex-shrink-0 flex items-center justify-center group-hover:bg-primary/10">
-                      <Code className="h-5 w-5 text-primary" />
-                    </div>
-                    <div className="text-left overflow-hidden flex-1">
-                      <p className="font-semibold text-sm text-slate-900 truncate">{project.title}</p>
-                      <p className="text-xs text-muted-foreground truncate">
-                        {project.domain} • {project.language}
-                      </p>
-                    </div>
-                    <ArrowRight className="h-4 w-4 text-slate-300 group-hover:text-primary group-hover:translate-x-1 transition-all" />
-                  </Link>
-                ))}
-              </>
-            ) : (
-              <div className="p-10 text-center">
-                <p className="text-slate-500 font-medium">No results found</p>
-              </div>
-            )}
-          </div>
-        </div>
-      )}
-    </div>
-
-    {/* 3. Text Animation Block (Now Below Search) */}
-    <div className="min-h-[200px] flex flex-col items-center justify-start">
-      {services.map((service, index) => {
-        const isActive = index === currentSlide;
-        return (
-          isActive && (
-            <div key={index} className="flex flex-col items-center">
-              <h2 className="text-5xl md:text-7xl font-bold text-white mb-6 tracking-tight transition-all duration-1000 transform animate-in fade-in slide-in-from-left-10">
-                {service.title}
-              </h2>
-              <div className="h-1 bg-blue-500 mb-6 w-24 animate-in zoom-in duration-1500" />
-              <p className="text-lg md:text-xl text-slate-300 max-w-2xl mx-auto leading-relaxed animate-in fade-in slide-in-from-bottom-5 duration-1000 delay-300">
-                {service.description}
-              </p>
-            </div>
-          )
-        )
-      })}
-    </div>
-  </div>
-</section>
-
-      {/* Category Quick Links */}
-      <section className="py-12 bg-secondary/50">
-        <div className="container mx-auto px-4">
-          <div className="grid grid-cols-3 md:grid-cols-5 lg:grid-cols-8 gap-4 items-">
-            {categories.map((cat) => {
-              const IconComponent = iconMap[cat.icon] || Code;
-              return (
-                <Link
-                  key={cat.id}
-                  to={`/projects/${cat.id}`}
-                  className="flex flex-col items-center gap-2 p-4 bg-card rounded-lg hover:shadow-md transition-all hover:-translate-y-1 group"
-                >
-                  <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center group-hover:bg-primary group-hover:text-primary-foreground transition-colors">
-                    <IconComponent className="h-6 w-6" />
-                  </div>
-                  <span className="text-sm font-medium text-center">{cat.shortName}</span>
-                </Link>
-              );
-            })}
-          </div>
-        </div>
-      </section>
-
-      {/* Services Carousel Section */}
-      <section className="py-12 md:py-16 bg-secondary/30">
-        <div className="container mx-auto px-4">
-          <AnimatedText variant="fade-up" className="text-center mb-8 md:mb-10">
-            <h2 className="text-2xl md:text-3xl lg:text-4xl font-bold mb-3 md:mb-4">
-              <span className="font-handwritten text-3xl md:text-4xl lg:text-5xl">Our </span>
-              <HighlightText variant="marker">Services</HighlightText>
-            </h2>
-            <p className="text-sm md:text-base text-muted-foreground max-w-2xl mx-auto px-4">
-              Comprehensive solutions for all your academic and professional project needs
+        <div className="container mx-auto px-4 relative z-30 max-w-4xl text-center space-y-6">
+          {/* Centered Typography (PwC & Udemy Style) */}
+          <div className="space-y-5 animate-in fade-in duration-1000 delay-100">
+            <h1 className="text-4xl md:text-7xl text-white leading-tight tracking-tight max-w-3xl mx-auto font-extrabold">
+              Build Your Future <br />
+              With <span
+                className="bg-clip-text text-transparent"
+                style={{ backgroundImage: "linear-gradient(to right, #00f2fe, #ff758f)" }}
+              >One Platform.</span>
+            </h1>
+            <p className="text-sm md:text-lg text-slate-300 leading-relaxed max-w-3xl mx-auto font-normal">
+              A technology ecosystem delivering <span className="text-[#00f2fe] font-bold underline decoration-[#00f2fe]/40 decoration-2 underline-offset-4">world-class software engineering</span>, <span className="text-[#00f2fe] font-bold underline decoration-[#00f2fe]/40 decoration-2 underline-offset-4">AI innovation</span>, <span className="text-[#00f2fe] font-bold underline decoration-[#00f2fe]/40 decoration-2 underline-offset-4">digital transformation</span>, and enterprise solutions for businesses and institutions while <span className="text-[#00f2fe] font-bold underline decoration-[#00f2fe]/40 decoration-2 underline-offset-4">cultivating future talent</span> through practical learning.
             </p>
-          </AnimatedText>
-          <Carousel
-            opts={{
-              align: "start",
-              loop: true,
-            }}
-            className="w-full max-w-6xl mx-auto"
-          >
-            <CarouselContent className="-ml-2 md:-ml-4">
-              {services.map((service, index) => (
-                <CarouselItem key={index} className="pl-2 md:pl-4 basis-full sm:basis-1/2 lg:basis-1/3">
-                  <div className="bg-card border rounded-xl p-5 md:p-6 h-full hover:shadow-lg transition-all group">
-                    <div className="h-12 w-12 md:h-14 md:w-14 bg-gradient-to-br from-primary/20 to-primary/5 rounded-xl flex items-center justify-center mb-3 md:mb-4 group-hover:from-primary group-hover:to-primary/80 transition-all">
-                      <service.icon className="h-6 w-6 md:h-7 md:w-7 text-primary group-hover:text-primary-foreground transition-colors" />
-                    </div>
-                    <h3 className="font-semibold text-base md:text-lg mb-2">{service.title}</h3>
-                    <p className="text-muted-foreground text-xs md:text-sm">{service.description}</p>
-                  </div>
-                </CarouselItem>
-              ))}
-            </CarouselContent>
-            <CarouselPrevious className="hidden md:flex -left-12" />
-            <CarouselNext className="hidden md:flex -right-12" />
-          </Carousel>
-          <div className="text-center mt-6 md:mt-8">
-            <Link to="/services">
-              <Button variant="outline" className="gap-2">
-                View All Services <ArrowRight className="h-4 w-4" />
-              </Button>
-            </Link>
           </div>
-        </div>
-      </section>
 
-      {/* About Us Section */}
-      <section className="py-12 md:py-16 bg-gradient-to-br from-primary/5 to-accent/10">
-        <div className="container mx-auto px-4">
-          <AnimatedText variant="fade-up" className="max-w-4xl mx-auto text-center">
-            <h2 className="text-2xl md:text-3xl lg:text-4xl font-bold mb-4 md:mb-6">
-              <span className="font-handwritten text-3xl md:text-4xl lg:text-5xl">About </span>
-              <HighlightText variant="underline" color="secondary">Us</HighlightText>
-            </h2>
-            <p className="text-base md:text-lg text-muted-foreground mb-6 md:mb-8 leading-relaxed px-2">
-              <strong>Techno Riderzz Software Solutions</strong> is a leading technology company based in Hyderabad, 
-              dedicated to providing innovative solutions for academic projects, professional training, and software development. 
-              We specialize in helping students and professionals achieve their goals through cutting-edge technology, 
-              comprehensive training programs, and hands-on project experience.
-            </p>
-            <p className="text-sm md:text-base text-muted-foreground mb-6 md:mb-8 px-2">
-              Our mission is to bridge the gap between academic learning and industry requirements by offering 
-              real-world project experience, expert guidance, and quality education in emerging technologies.
-            </p>
-            <Link to="/about">
-              <Button size="lg" className="gap-2 hover-wiggle">
-                Learn More About Us <ArrowRight className="h-4 w-4" />
-              </Button>
-            </Link>
-          </AnimatedText>
-        </div>
-      </section>
+          {/* Centered Search Commander Bar */}
+          <div className="w-full max-w-2xl mx-auto animate-in fade-in slide-in-from-bottom-5 duration-1000 delay-200">
+            <UniversalSearch />
+          </div>
 
-      {/* Popular Projects Section */}
-      <section className="py-16">
-        <div className="container mx-auto px-4">
-          <div className="flex items-center justify-between mb-8">
-            <h2 className="text-2xl md:text-3xl font-bold">
-              <span className="font-handwritten text-3xl md:text-4xl">Popular </span>
-              <HighlightText variant="marker">Projects</HighlightText>
-            </h2>
+          {/* Discovery Action Triggers */}
+          <div className="flex flex-wrap justify-center items-center gap-4 animate-in fade-in slide-in-from-bottom-5 duration-1000 delay-300">
             <Link to="/projects/python">
-              <Button variant="outline" className="gap-2 hover-wiggle">
-                View All <ArrowRight className="h-4 w-4" />
+              <Button size="lg" className="rounded-full px-8 bg-rose-600 hover:bg-rose-700 text-white font-semibold h-12 shadow-lg shadow-rose-500/20 transition-all duration-200">
+                Explore Projects
+              </Button>
+            </Link>
+            <Link to="/internships">
+              <Button size="lg" className="rounded-full px-8 bg-white text-blue-900 hover:bg-amber-50 font-semibold h-12 shadow-lg transition-all duration-200">
+                Find Internships
               </Button>
             </Link>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 stagger-children">
-            {popularProjects.map((project) => (
-              <ProjectCard key={project.id} project={project} />
-            ))}
+
+        </div>
+
+        {/* Infinite Technologies Scroll Marquee Ticker (Full Width with Lite BG) */}
+        <div className="mt-14 w-full overflow-hidden relative z-10 animate-in fade-in slide-in-from-bottom-5 duration-1000 delay-400 bg-slate-50/50 border-y border-slate-100/80 py-4">
+          <span className="text-[10px] font-bold uppercase tracking-widest text-slate-400 block mb-3 text-center">
+            Supported Technologies & Frameworks
+          </span>
+          <div className="relative w-full overflow-hidden">
+            {/* Left/Right fading gradients to blend marquee edges smoothly with white background */}
+            <div className="absolute left-0 top-0 bottom-0 w-24 bg-gradient-to-r from-white to-transparent z-10 pointer-events-none" />
+            <div className="absolute right-0 top-0 bottom-0 w-24 bg-gradient-to-l from-white to-transparent z-10 pointer-events-none" />
+            
+            <div className="animate-marquee-scroll-slow flex gap-12 items-center">
+              {[...technologies, ...technologies, ...technologies, ...technologies].map((tech, idx) => {
+                const Icon = tech.icon;
+                const details = techDetails[tech.name] || {
+                  desc: "Learn trending industry frameworks and technologies through practical projects.",
+                  projects: "1,000+ Projects",
+                  difficulty: "Intermediate",
+                  role: "Software Developer"
+                };
+                return (
+                  <HoverCard key={`${tech.name}-${idx}`} openDelay={150} closeDelay={150}>
+                    <HoverCardTrigger asChild>
+                      <div>
+                        <Link 
+                          to={`/projects/${tech.slug}`}
+                          className="flex items-center gap-3.5 px-6 py-2.5 bg-slate-100 border border-slate-300 shadow-sm rounded-xl shrink-0 hover:scale-105 transition-all duration-300 cursor-pointer group hover:border-slate-300/80 hover:shadow-md"
+                        >
+                          <Icon />
+                          <span className="text-sm font-semibold text-slate-500 group-hover:text-slate-900 transition-colors tracking-wide select-none">
+                            {tech.name}
+                          </span>
+                        </Link>
+                      </div>
+                    </HoverCardTrigger>
+                    <HoverCardContent side="top" align="center" className="w-80 rounded-2xl bg-slate-100 border border-slate-300 shadow-xl p-5 text-slate-800 z-50 text-left">
+                      <div className="space-y-4">
+                        <div className="flex items-center gap-3.5 border-b border-slate-100 pb-3">
+                          <Icon />
+                          <div>
+                            <h4 className="font-extrabold text-xs text-slate-900">{tech.name}</h4>
+                            <p className="text-[9px] text-slate-400 uppercase tracking-wider font-bold">{details.role}</p>
+                          </div>
+                        </div>
+                        <div className="text-[11px] text-slate-500 leading-relaxed">
+                          <p>{details.desc}</p>
+                        </div>
+                        <div className="grid grid-cols-2 gap-2 text-[10px] bg-slate-50 p-2.5 rounded-xl border border-slate-100/70 text-slate-650">
+                          <div><strong>Ecosystem:</strong> {details.projects}</div>
+                          <div><strong>Difficulty:</strong> {details.difficulty}</div>
+                        </div>
+                      </div>
+                    </HoverCardContent>
+                  </HoverCard>
+                );
+              })}
+            </div>
           </div>
         </div>
       </section>
 
-      {/* CTA Section */}
-      <section className="py-16 bg-primary text-primary-foreground">
-        <div className="container mx-auto px-4 text-center">
-          <AnimatedText variant="fade-up">
-            <h2 className="text-3xl font-bold mb-4 font-handwritten text-4xl md:text-5xl">
-              Ready to Start Your Journey?
-            </h2>
-            <p className="text-lg opacity-90 mb-8 max-w-2xl mx-auto">
-              Explore our courses and internship programs to gain practical skills and real-world experience.
-            </p>
-            <div className="flex flex-wrap justify-center gap-4">
-              <Link to="/courses">
-                <Button size="lg" variant="secondary" className="hover-wiggle">Browse Courses</Button>
-              </Link>
-              <Link to="/internships">
-                <Button size="lg" variant="outline" className="border-primary-foreground text-primary-foreground hover:bg-primary-foreground hover:text-primary hover-wiggle">
-                  Explore Internships
-                </Button>
-              </Link>
-            </div>
-          </AnimatedText>
-        </div>
+      {/* 2. Ecosystem Hubs Grid Section */}
+      <EcosystemSection />
+
+      {/* 3. Tabbed Opportunity Discovery Shelf (Udemy & Coursera Style) */}
+      <OpportunityShelf />
+
+      {/* 4. Research Hub Section */}
+      <ResearchHubSection />
+
+      {/* 5. Trust & Credentials Section (Stats Counter) */}
+      <section className="py-8 bg-background border-b border-slate-100/60">
+        <StatsCounter />
       </section>
     </Layout>
   );
-};
-
-export default Index;
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-// import { useState, useRef, useEffect } from "react";
-// import { Link } from "react-router-dom";
-// import { 
-//   Search, ArrowRight, Code, Database, Brain, Cpu, 
-//   Smartphone, Coffee, Cloud, Twitter, Globe, FileCode, Users, ChevronLeft, ChevronRight,
-//   FileText,
-//   Laptop
-// } from "lucide-react";
-// import { Button } from "@/components/ui/button";
-// import { Input } from "@/components/ui/input";
-// import Layout from "@/components/layout/Layout";
-// import ProjectCard from "@/components/ProjectCard";
-// import { projects } from "@/data/projects";
-// import { categories } from "@/data/categories";
-// import HighlightText from "@/components/ui/HighlightText";
-// import AnimatedText from "@/components/ui/AnimatedText";
-// import {
-//   Carousel,
-//   CarouselContent,
-//   CarouselItem,
-//   CarouselNext,
-//   CarouselPrevious,
-// } from "@/components/ui/carousel";
-
-// import DatabaseDesign from "../assets/SystemDesign.png"
-// import MobileApp from "../assets/MobileAppDevelopment.avif"
-// import WebApplication from "../assets/WebApplicationDevelopment.jpg"
-// import CloudSolutions from "../assets/CloudSolutions.webp"
-// import MachineLearning from "../assets/MachineLearning.jpg"
-// import ProjectDocumentation from "../assets/ProjectDocumentation.jpg"
-
-
-// const iconMap: Record<string, any> = {
-//   Code, Database, Brain, Cpu, Smartphone, Coffee, Cloud, Twitter, Globe
-// };
-
-// const services = [
-//   {
-//     title: "Custom Project Development",
-//     description: "Tailored projects in Python, Java, .NET, PHP, and more to meet your specific needs.",
-//     image: "https://images.unsplash.com/photo-1517694712202-14dd9538aa97?q=80&w=2070&auto=format&fit=crop",
-//     icon: Code
-//   },
-//   {
-//     title: "Database Design & Development",
-//     description: "Professional ER diagrams, normalization, and implementation in MySQL, PostgreSQL, and MongoDB.",
-//     image: DatabaseDesign,
-//     icon: Database
-//   },
-//   {
-//     title: "Mobile App Development",
-//     description: "Native and cross-platform apps for Android and iOS using Flutter, React Native, and Kotlin.",
-//     image: MobileApp,
-//     icon: Smartphone
-//   },
-//   {
-//     title: "Web Application Development",
-//     description: "Full-stack web development using React, Angular, Django, Node.js, and ASP.NET.",
-//     image: WebApplication,
-//     icon: Globe
-//   },
-//   {
-//     title: "Machine Learning Projects",
-//     description: "AI development including predictive models, NLP, computer vision, and deep learning.",
-//     image: MachineLearning,
-//     icon: Brain
-//   },
-//   {
-//     title: "Cloud Solutions",
-//     description: "AWS, Azure, and Google Cloud projects with deployment and scaling services.",
-//     image: CloudSolutions,
-//     icon: Cloud
-//   },
-//   {
-//     title: "Project Documentation",
-//     description: "Complete documentation including SRS, DFD, UML, ER diagrams, and presentation slides.",
-//     image: ProjectDocumentation,
-//     icon: FileText
-//   },
-//   {
-//     title: "Technical Training",
-//     description: "Hands-on project experience and training programs in the latest technologies.",
-//     image: "https://images.unsplash.com/photo-1524178232363-1fb2b075b655?q=80&w=2070&auto=format&fit=crop",
-//     icon: Laptop
-//   }
-// ];
-
-
-// const Index = () => {
-//   const [searchQuery, setSearchQuery] = useState("");
-//   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
-//   const searchRef = useRef<HTMLDivElement>(null);
-
-//   // Filter projects based on input (minimum 3 characters)
-//   const filteredResults = projects.filter((project) => {
-//     const query = searchQuery.toLowerCase();
-//     return (
-//       query.length >= 3 && (
-//         project.title.toLowerCase().includes(query) ||
-//         project.domain.toLowerCase().includes(query) ||
-//         project.language.toLowerCase().includes(query) ||
-//         project.techStack.framework?.toLowerCase().includes(query)
-//       )
-//     );
-//   }).slice(0, 6); // Limit results for the dropdown
-
-//   // Popular projects for the bottom section
-//   const popularProjects = projects.slice(0, 9);
-
-//   // Close dropdown when clicking outside the search area
-//   useEffect(() => {
-//     const handleClickOutside = (event: MouseEvent) => {
-//       if (searchRef.current && !searchRef.current.contains(event.target as Node)) {
-//         setIsDropdownOpen(false);
-//       }
-//     };
-//     document.addEventListener("mousedown", handleClickOutside);
-//     return () => document.removeEventListener("mousedown", handleClickOutside);
-//   }, []);
-
-//   const [currentSlide, setCurrentSlide] = useState(0);
-
-//   // Auto-slide every 5 seconds
-//   useEffect(() => {
-//     const timer = setInterval(() => {
-//       setCurrentSlide((prev) => (prev === services.length - 1 ? 0 : prev + 1));
-//     }, 5000);
-//     return () => clearInterval(timer);
-//   }, []);
-
-//   return (
-//     <Layout>
-//       {/* Hero Section */}
-//   <section className="relative h-[650px] md:h-[750px] w-full overflow-hidden flex items-center bg-slate-900">
-//   {/* Background Slides */}
-//   {services.map((service, index) => {
-//     const isActive = index === currentSlide;
-
-//     return (
-//       <div
-//         key={index}
-//         className={`absolute inset-0 transition-all duration-[1500ms] ease-in-out ${
-//           isActive ? "z-10 opacity-100" : "z-0 opacity-0"
-//         }`}
-//         style={{
-//           clipPath: isActive 
-//             ? "inset(0% 0% 0% 0%)" 
-//             : "inset(0% 50% 0% 50%)",
-//         }}
-//       >
-//         {/* Background Image with Zoom */}
-//         <div
-//           className={`absolute inset-0 bg-cover bg-center transition-transform duration-[8000ms] ease-out ${
-//             isActive ? "scale-100" : "scale-125"
-//           }`}
-//           style={{ backgroundImage: `url(${service.image})` }}
-//         />
-
-//         {/* Overlays */}
-//         <div className="absolute inset-0 bg-gradient-to-b from-slate-950/20 via-slate-950/40 to-slate-950/90" />
-
-//         {/* Decorative Vertical Accent Line (Left Side) */}
-//         <div 
-//           className={`absolute top-1/2 left-12 w-1 h-32 bg-blue-500 transition-all duration-1000 delay-500 hidden md:block ${
-//             isActive ? "opacity-100 translate-y-0" : "opacity-0 -translate-y-10"
-//           }`} 
-//         />
-
-//         {/* Content Container: Using your exact requested style and animations */}
-//         <div className="absolute inset-0 flex flex-col justify-end p-12 md:p-24 pb-32 md:pb-40">
-//           <div className="max-w-3xl text-left">
-//             <h2 
-//               className={`text-5xl md:text-7xl font-bold text-white mb-4 transition-all duration-1000 delay-300 ${
-//                 isActive ? "opacity-100 translate-x-0" : "opacity-0 -translate-x-10"
-//               }`}
-//             >
-//               {service.title}
-//             </h2>
-            
-//             <div 
-//               className={`h-1 bg-blue-500 mb-6 transition-all duration-[1500ms] ${
-//                 isActive ? "w-24" : "w-0"
-//               }`} 
-//             />
-            
-//             <p 
-//               className={`text-slate-300 text-lg md:text-xl max-w-xl transition-all duration-1000 delay-500 ${
-//                 isActive ? "opacity-100 translate-y-0" : "opacity-0 translate-y-10"
-//               }`}
-//             >
-//               {service.description}
-//             </p>
-//           </div>
-//         </div>
-//       </div>
-//     );
-//   })}
-
-//   {/* Search UI Layer */}
-//   <div className="container mx-auto px-4 relative z-20 mt-auto pb-12">
-//     <div className="max-w-3xl mx-auto relative" ref={searchRef}>
-//       <div className="relative group shadow-2xl rounded-full">
-//         <Input
-//           type="text"
-//           placeholder="Search services or technologies..."
-//           value={searchQuery}
-//           onFocus={() => setIsDropdownOpen(true)}
-//           onChange={(e) => {
-//             setSearchQuery(e.target.value);
-//             setIsDropdownOpen(true);
-//           }}
-//           className="h-16 pl-14 pr-6 text-lg rounded-full bg-white/95 border-0 focus-visible:ring-4 ring-primary/30"
-//         />
-//         <Search className="absolute left-5 top-1/2 -translate-y-1/2 h-6 w-6 text-slate-400" />
-//         <Button className="absolute right-2 top-1/2 -translate-y-1/2 rounded-full h-12 px-8 bg-primary hover:bg-primary/90 text-white hidden md:flex">
-//           Search Now
-//         </Button>
-//       </div>
-
-//       {/* Slide Indicators */}
-//       <div className="flex justify-center gap-3 mt-8">
-//         {services.map((_, i) => (
-//           <button
-//             key={i}
-//             onClick={() => setCurrentSlide(i)}
-//             className={`h-1.5 transition-all duration-500 rounded-full ${
-//               currentSlide === i ? "w-10 bg-primary" : "w-4 bg-white/30"
-//             }`}
-//           />
-//         ))}
-//       </div>
-//     </div>
-//   </div>
-// </section>
-
-//       {/* Category Quick Links */}
-//       <section className="py-12 bg-secondary/50">
-//         <div className="container mx-auto px-4">
-//           <div className="grid grid-cols-3 md:grid-cols-5 lg:grid-cols-8 gap-4 items-">
-//             {categories.map((cat) => {
-//               const IconComponent = iconMap[cat.icon] || Code;
-//               return (
-//                 <Link
-//                   key={cat.id}
-//                   to={`/projects/${cat.id}`}
-//                   className="flex flex-col items-center gap-2 p-4 bg-card rounded-lg hover:shadow-md transition-all hover:-translate-y-1 group"
-//                 >
-//                   <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center group-hover:bg-primary group-hover:text-primary-foreground transition-colors">
-//                     <IconComponent className="h-6 w-6" />
-//                   </div>
-//                   <span className="text-sm font-medium text-center">{cat.shortName}</span>
-//                 </Link>
-//               );
-//             })}
-//           </div>
-//         </div>
-//       </section>
-
-//       {/* Services Carousel Section */}
-//       <section className="py-12 md:py-16 bg-secondary/30">
-//         <div className="container mx-auto px-4">
-//           <AnimatedText variant="fade-up" className="text-center mb-8 md:mb-10">
-//             <h2 className="text-2xl md:text-3xl lg:text-4xl font-bold mb-3 md:mb-4">
-//               <span className="font-handwritten text-3xl md:text-4xl lg:text-5xl">Our </span>
-//               <HighlightText variant="marker">Services</HighlightText>
-//             </h2>
-//             <p className="text-sm md:text-base text-muted-foreground max-w-2xl mx-auto px-4">
-//               Comprehensive solutions for all your academic and professional project needs
-//             </p>
-//           </AnimatedText>
-//           <Carousel
-//             opts={{
-//               align: "start",
-//               loop: true,
-//             }}
-//             className="w-full max-w-6xl mx-auto"
-//           >
-//             <CarouselContent className="-ml-2 md:-ml-4">
-//               {services.map((service, index) => (
-//                 <CarouselItem key={index} className="pl-2 md:pl-4 basis-full sm:basis-1/2 lg:basis-1/3">
-//                   <div className="bg-card border rounded-xl p-5 md:p-6 h-full hover:shadow-lg transition-all group">
-//                     <div className="h-12 w-12 md:h-14 md:w-14 bg-gradient-to-br from-primary/20 to-primary/5 rounded-xl flex items-center justify-center mb-3 md:mb-4 group-hover:from-primary group-hover:to-primary/80 transition-all">
-//                       <service.icon className="h-6 w-6 md:h-7 md:w-7 text-primary group-hover:text-primary-foreground transition-colors" />
-//                     </div>
-//                     <h3 className="font-semibold text-base md:text-lg mb-2">{service.title}</h3>
-//                     <p className="text-muted-foreground text-xs md:text-sm">{service.description}</p>
-//                   </div>
-//                 </CarouselItem>
-//               ))}
-//             </CarouselContent>
-//             <CarouselPrevious className="hidden md:flex -left-12" />
-//             <CarouselNext className="hidden md:flex -right-12" />
-//           </Carousel>
-//           <div className="text-center mt-6 md:mt-8">
-//             <Link to="/services">
-//               <Button variant="outline" className="gap-2">
-//                 View All Services <ArrowRight className="h-4 w-4" />
-//               </Button>
-//             </Link>
-//           </div>
-//         </div>
-//       </section>
-
-//       {/* About Us Section */}
-//       <section className="py-12 md:py-16 bg-gradient-to-br from-primary/5 to-accent/10">
-//         <div className="container mx-auto px-4">
-//           <AnimatedText variant="fade-up" className="max-w-4xl mx-auto text-center">
-//             <h2 className="text-2xl md:text-3xl lg:text-4xl font-bold mb-4 md:mb-6">
-//               <span className="font-handwritten text-3xl md:text-4xl lg:text-5xl">About </span>
-//               <HighlightText variant="underline" color="secondary">Us</HighlightText>
-//             </h2>
-//             <p className="text-base md:text-lg text-muted-foreground mb-6 md:mb-8 leading-relaxed px-2">
-//               <strong>Techno Riderzz Software Solutions</strong> is a leading technology company based in Hyderabad, 
-//               dedicated to providing innovative solutions for academic projects, professional training, and software development. 
-//               We specialize in helping students and professionals achieve their goals through cutting-edge technology, 
-//               comprehensive training programs, and hands-on project experience.
-//             </p>
-//             <p className="text-sm md:text-base text-muted-foreground mb-6 md:mb-8 px-2">
-//               Our mission is to bridge the gap between academic learning and industry requirements by offering 
-//               real-world project experience, expert guidance, and quality education in emerging technologies.
-//             </p>
-//             <Link to="/about">
-//               <Button size="lg" className="gap-2 hover-wiggle">
-//                 Learn More About Us <ArrowRight className="h-4 w-4" />
-//               </Button>
-//             </Link>
-//           </AnimatedText>
-//         </div>
-//       </section>
-
-//       {/* Popular Projects Section */}
-//       <section className="py-16">
-//         <div className="container mx-auto px-4">
-//           <div className="flex items-center justify-between mb-8">
-//             <h2 className="text-2xl md:text-3xl font-bold">
-//               <span className="font-handwritten text-3xl md:text-4xl">Popular </span>
-//               <HighlightText variant="marker">Projects</HighlightText>
-//             </h2>
-//             <Link to="/projects/python">
-//               <Button variant="outline" className="gap-2 hover-wiggle">
-//                 View All <ArrowRight className="h-4 w-4" />
-//               </Button>
-//             </Link>
-//           </div>
-//           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 stagger-children">
-//             {popularProjects.map((project) => (
-//               <ProjectCard key={project.id} project={project} />
-//             ))}
-//           </div>
-//         </div>
-//       </section>
-
-//       {/* CTA Section */}
-//       <section className="py-16 bg-primary text-primary-foreground">
-//         <div className="container mx-auto px-4 text-center">
-//           <AnimatedText variant="fade-up">
-//             <h2 className="text-3xl font-bold mb-4 font-handwritten text-4xl md:text-5xl">
-//               Ready to Start Your Journey?
-//             </h2>
-//             <p className="text-lg opacity-90 mb-8 max-w-2xl mx-auto">
-//               Explore our courses and internship programs to gain practical skills and real-world experience.
-//             </p>
-//             <div className="flex flex-wrap justify-center gap-4">
-//               <Link to="/courses">
-//                 <Button size="lg" variant="secondary" className="hover-wiggle">Browse Courses</Button>
-//               </Link>
-//               <Link to="/internships">
-//                 <Button size="lg" variant="outline" className="border-primary-foreground text-primary-foreground hover:bg-primary-foreground hover:text-primary hover-wiggle">
-//                   Explore Internships
-//                 </Button>
-//               </Link>
-//             </div>
-//           </AnimatedText>
-//         </div>
-//       </section>
-//     </Layout>
-//   );
-// };
-
-// export default Index;
+}

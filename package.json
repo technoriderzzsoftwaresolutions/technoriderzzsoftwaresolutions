@@ -7,7 +7,7 @@
     "dev": "vite",
     "server": "node server.js",
     "full-dev": "concurrently \"npm run dev\" \"npm run server\"",
-    "build": "vite build",
+    "build": "vite build && node generate-sitemap.js && node prerender.js",
     "build:dev": "vite build --mode development",
     "lint": "eslint .",
     "preview": "vite preview"

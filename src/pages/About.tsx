@@ -2,6 +2,7 @@ import Layout from "@/components/layout/Layout";
 import SafeImage from "@/components/SafeImage";
 import { Award, Users, BookOpen, Briefcase } from "lucide-react";
 import { useEffect } from "react";
+import poojaImg from "@/assets/pooja.jpg";
 
 const About = () => {
  
@@ -99,8 +100,12 @@ const About = () => {
         <div className="relative mb-8">
           {/* Decorative Ring */}
           <div className="absolute -inset-4 border border-primary/20 rounded-full animate-spin-slow" />
-          <div className="w-48 h-48 md:w-64 md:h-64 bg-gradient-to-br from-slate-900 to-slate-800 rounded-full flex items-center justify-center text-white relative overflow-hidden shadow-xl">
-            <span className="text-6xl font-bold">PM</span>
+          <div className="w-48 h-48 md:w-64 md:h-64 bg-slate-950 rounded-full flex items-center justify-center text-white relative overflow-hidden shadow-xl border-4 border-white dark:border-slate-800">
+            <img 
+              src={poojaImg} 
+              alt="Pooja Mishra" 
+              className="w-full h-full object-cover object-center scale-100 hover:scale-105 transition-transform duration-500"
+            />
           </div>
         </div>
         
