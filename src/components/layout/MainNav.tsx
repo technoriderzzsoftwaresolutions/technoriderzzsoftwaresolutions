@@ -28,12 +28,12 @@ export default function MainNav() {
 
   // Premium light glassmorphic states to blend with the white theme layouts
   const navbarBg = isHome
-    ? (isScrolled 
-        ? "bg-[#1e40af]/95 backdrop-blur-md border-b border-white/10 text-white shadow-sm py-3" 
-        : "bg-[#1e40af] text-white border-b border-white/5 py-4")
-    : (isScrolled 
-        ? "bg-white/90 backdrop-blur-md border-b border-slate-100/80 text-slate-800 shadow-sm py-3" 
-        : "bg-white/70 backdrop-blur-md border-b border-slate-100/40 text-slate-800 py-4");
+    ? (isScrolled
+      ? "bg-[#1e40af]/95 backdrop-blur-md border-b border-white/10 text-white shadow-sm py-3"
+      : "bg-[#1e40af] text-white border-b border-white/5 py-4")
+    : (isScrolled
+      ? "bg-white/90 backdrop-blur-md border-b border-slate-100/80 text-slate-800 shadow-sm py-3"
+      : "bg-white/70 backdrop-blur-md border-b border-slate-100/40 text-slate-800 py-4");
 
   const linkColor = (path: string) => {
     const isActive = location.pathname === path;
@@ -43,20 +43,20 @@ export default function MainNav() {
     return isActive ? "text-rose-600 font-bold" : "text-slate-600 hover:text-rose-600 font-semibold";
   };
 
-  const dropdownTriggerColor = isHome 
-    ? "text-slate-300 hover:text-rose-500 font-semibold" 
+  const dropdownTriggerColor = isHome
+    ? "text-slate-300 hover:text-rose-500 font-semibold"
     : "text-slate-600 hover:text-rose-600 font-semibold";
 
   return (
     <nav className={`sticky top-0 z-50 transition-all duration-300 ease-out ${navbarBg}`}>
       <div className="w-full pl-4 pr-6">
         <div className="flex items-center justify-between">
-          
+
           {/* Brand Logo Frame */}
           <Link to="/" className="flex items-center gap-2 shrink-0">
-            <img 
-              src={logo} 
-              alt="Techno Riderzz Logo" 
+            <img
+              src={logo}
+              alt="Techno Riderzz Logo"
               className="w-auto rounded-xl object-contain transition-all duration-300 ease-out"
               style={{ maxHeight: isScrolled ? "46px" : "52px" }}
             />
@@ -93,7 +93,7 @@ export default function MainNav() {
             </Link>
 
             <Link to="/about" className={`text-xs xl:text-sm font-bold tracking-wide transition-colors ${linkColor("/about")}`}>
-              Research
+              About
             </Link>
 
             <Link to="/blogs" className={`text-xs xl:text-sm font-bold tracking-wide transition-colors ${linkColor("/blogs")}`}>
