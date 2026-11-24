@@ -40,23 +40,28 @@ const Blogs = () => {
 
   const fetchBlogs = () => {
     fetch(`${API_URL}/blogs`)
-      .then((res) => res.json())
+      .then((res) => {
+        if (!res.ok) return [];
+        return res.json();
+      })
       .then((data) => {
-        setBlogs(data);
+        setBlogs(Array.isArray(data) ? data : []);
         setLoading(false);
       })
       .catch((err) => {
         console.error("Error fetching blogs:", err);
+        setBlogs([]);
         setLoading(false);
       });
   };
 
-
-
   useEffect(() => {
     fetchBlogs();
 
-    // Popup logic: Show every 5 seconds if not already shown
+    // Failsafe timer: Ensure spinner disappears after 2 seconds max
+    const timer = setTimeout(() => setLoading(false), 2000);
+
+    // Popup logic: Show every 10 seconds if not already shown
     const interval = setInterval(() => {
       setShowPopup((prev) => {
         if (prev) return prev; // If already shown, don't do anything
@@ -64,8 +69,10 @@ const Blogs = () => {
       });
     }, 10000);
 
-
-    return () => clearInterval(interval);
+    return () => {
+      clearTimeout(timer);
+      clearInterval(interval);
+    };
   }, []);
 
   const handleDeleteBlog = async (blogId: string, blogTitle: string, e: React.MouseEvent) => {
@@ -138,7 +145,7 @@ const Blogs = () => {
       </div>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 -mt-12 relative z-10 pb-20">
-        {blogs.length === 0 ? (
+        {(!Array.isArray(blogs) || blogs.length === 0) ? (
           <div className="bg-white rounded-2xl shadow-xl p-12 text-center">
             <p className="text-gray-500 text-xl font-medium">No blogs published yet. Check back soon!</p>
           </div>

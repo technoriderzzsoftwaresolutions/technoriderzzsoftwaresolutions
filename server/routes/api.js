@@ -315,20 +315,27 @@ router.delete('/contact/:id', async (req, res) => {
 // --- BLOGS ---
 router.get('/blogs', async (req, res) => {
   try {
+    if (mongoose.connection.readyState !== 1) {
+      return res.json([]);
+    }
     const blogs = await Blog.find().sort({ createdAt: -1 });
     res.json(blogs);
   } catch (err) {
-    res.status(500).json({ message: err.message });
+    console.error('Error fetching blogs:', err.message);
+    res.json([]);
   }
 });
 
 router.get('/blogs/:id', async (req, res) => {
   try {
+    if (mongoose.connection.readyState !== 1) {
+      return res.status(404).json({ message: 'Blog not found' });
+    }
     const blog = await Blog.findById(req.params.id);
     if (!blog) return res.status(404).json({ message: 'Blog not found' });
     res.json(blog);
   } catch (err) {
-    res.status(500).json({ message: err.message });
+    res.status(404).json({ message: err.message });
   }
 });
 

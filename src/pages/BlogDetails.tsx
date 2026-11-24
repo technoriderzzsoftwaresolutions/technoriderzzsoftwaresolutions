@@ -25,9 +25,12 @@ const BlogDetails = () => {
     
     // Fetch current blog
     fetch(`${API_URL}/blogs/${id}`)
-      .then((res) => res.json())
+      .then((res) => {
+        if (!res.ok) return null;
+        return res.json();
+      })
       .then((data) => {
-        setBlog(data);
+        setBlog(data && data._id ? data : null);
         setLoading(false);
       })
       .catch((err) => {
@@ -37,11 +40,19 @@ const BlogDetails = () => {
 
     // Fetch popular blogs for sidebar
     fetch(`${API_URL}/blogs`)
-      .then((res) => res.json())
+      .then((res) => {
+        if (!res.ok) return [];
+        return res.json();
+      })
       .then((data) => {
-        setPopularBlogs(data.slice(0, 5));
+        if (Array.isArray(data)) {
+          setPopularBlogs(data.slice(0, 5));
+        }
       })
       .catch(err => console.error(err));
+
+    const timer = setTimeout(() => setLoading(false), 2000);
+    return () => clearTimeout(timer);
 
   }, [id]);
 
