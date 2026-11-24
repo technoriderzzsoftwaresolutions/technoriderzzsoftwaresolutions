@@ -12,7 +12,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 
-const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000/api";
+const API_URL = "/api";
 
 interface Blog {
 
@@ -301,7 +301,7 @@ const Blogs = () => {
                   e.preventDefault(); 
                   setIsSubmitting(true);
                   try {
-                    const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000/api";
+                    const API_URL = "/api";
                     const res = await fetch(`${API_URL}/contact`, {
                       method: "POST",
                       headers: { "Content-Type": "application/json" },

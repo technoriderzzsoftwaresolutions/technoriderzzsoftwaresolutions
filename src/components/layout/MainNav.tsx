@@ -152,7 +152,7 @@ export default function MainNav() {
                 Courses
               </Link>
               <Link to="/about" className={`text-sm font-bold ${isHome ? 'hover:text-rose-500' : 'hover:text-rose-600'}`} onClick={() => setMobileMenuOpen(false)}>
-                Research
+                About
               </Link>
               <Link to="/blogs" className={`text-sm font-bold ${isHome ? 'hover:text-rose-500' : 'hover:text-rose-600'}`} onClick={() => setMobileMenuOpen(false)}>
                 Blog

@@ -33,7 +33,7 @@ const ProjectCard = ({ project }: ProjectCardProps) => {
   const [editingProject, setEditingProject] = useState<Project | null>(null);
   const [isEditOpen, setIsEditOpen] = useState(false);
   const isAdmin = typeof window !== "undefined" && localStorage.getItem("isAdminAuth") === "true";
-  const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000/api";
+  const API_URL = "/api";
 
   const handleDeleteProject = async (e: React.MouseEvent) => {
     e.stopPropagation();

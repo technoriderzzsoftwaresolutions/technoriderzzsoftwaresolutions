@@ -68,7 +68,7 @@ export default function UniversalSearch() {
         if (apiInternships && apiInternships.length > 0) setInternships([...staticInternships, ...apiInternships]);
 
         // Fetch blogs
-        const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000/api";
+        const API_URL = "/api";
         const blogRes = await fetch(`${API_URL}/blogs`).then(res => res.json()).catch(() => []);
         if (Array.isArray(blogRes)) {
           setBlogs(blogRes);

@@ -8,21 +8,22 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter }
 import { toast } from "sonner";
 import { Lock, KeyRound, ArrowLeft } from "lucide-react";
 
-const API_URL = import.meta.env.VITE_API_URL || "/api";
+const API_URL = "/api";
 
 const AdminLogin = () => {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [otp, setOtp] = useState("");
+  const [otpToken, setOtpToken] = useState("");
   const [showOtpInput, setShowOtpInput] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [timeLeft, setTimeLeft] = useState(60);
+  const [timeLeft, setTimeLeft] = useState(300);
   const navigate = useNavigate();
 
   useEffect(() => {
     if (!showOtpInput) return;
     
-    setTimeLeft(60);
+    setTimeLeft(300);
 
     const timer = setInterval(() => {
       setTimeLeft((prev) => {
@@ -48,6 +49,9 @@ const AdminLogin = () => {
       });
       const data = await res.json();
       if (res.ok && data.success) {
+        if (data.token) {
+          setOtpToken(data.token);
+        }
         toast.success("OTP sent to your registered admin email!");
         setShowOtpInput(true);
       } else {
@@ -67,7 +71,7 @@ const AdminLogin = () => {
       const res = await fetch(`${API_URL}/admin/verify-otp`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ otp })
+        body: JSON.stringify({ otp, token: otpToken })
       });
       const data = await res.json();
       if (res.ok && data.success) {
@@ -95,8 +99,11 @@ const AdminLogin = () => {
       });
       const data = await res.json();
       if (res.ok && data.success) {
+        if (data.token) {
+          setOtpToken(data.token);
+        }
         toast.success("OTP resent successfully!");
-        setTimeLeft(60);
+        setTimeLeft(300);
       } else {
         toast.error(data.message || "Failed to resend OTP.");
       }

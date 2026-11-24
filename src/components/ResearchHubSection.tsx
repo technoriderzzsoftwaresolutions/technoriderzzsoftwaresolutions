@@ -61,7 +61,7 @@ const services: ResearchService[] = [
 ];
 
 export default function ResearchHubSection() {
-  const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000/api";
+  const API_URL = "/api";
   const [servicesList, setServicesList] = useState<any[]>(services);
   const [editingService, setEditingService] = useState<any | null>(null);
   const [editingIndex, setEditingIndex] = useState<number | null>(null);

@@ -7,6 +7,8 @@ import Service from '../models/Service.js';
 import Contact from '../models/Contact.js';
 import Blog from '../models/Blog.js';
 import nodemailer from 'nodemailer';
+import jwt from 'jsonwebtoken';
+import crypto from 'crypto';
 
 
 // --- PROJECTS ---
@@ -373,10 +375,16 @@ router.post('/admin/request-otp', async (req, res) => {
     return res.status(500).json({ success: false, message: "Admin credentials are not configured in the server environment variables." });
   }
   if (username === expectedUser && password === expectedPass) {
-    currentOtp = String(Math.floor(100000 + Math.random() * 900000));
-    otpExpiry = Date.now() + 60 * 1000; // 60 seconds
+    const generatedOtp = String(Math.floor(100000 + Math.random() * 900000));
+    currentOtp = generatedOtp;
+    otpExpiry = Date.now() + 5 * 60 * 1000; // 5 minutes
+
+    const secret = process.env.ADMIN_PASSWORD || 'technoriderzz_admin_jwt_secret';
+    const otpHash = crypto.createHmac('sha256', secret).update(generatedOtp).digest('hex');
+    const token = jwt.sign({ otpHash }, secret, { expiresIn: '5m' });
+
     console.log("=== [ADMIN LOGIN OTP] ===");
-    console.log(`OTP Generated: ${currentOtp}`);
+    console.log(`OTP Generated: ${generatedOtp}`);
     console.log("=========================");
 
     const receiver = process.env.RECEIVER_EMAIL;
@@ -398,8 +406,8 @@ router.post('/admin/request-otp', async (req, res) => {
             <div style="font-family: Arial, sans-serif; padding: 20px; border: 1px solid #eee; border-radius: 8px; max-width: 500px;">
               <h2 style="color: #333;">Admin Dashboard Access Code</h2>
               <p>Your One-Time Password (OTP) for admin dashboard login is:</p>
-              <h1 style="color: #e11d48; font-size: 36px; letter-spacing: 4px; font-weight: bold; margin: 20px 0;">${currentOtp}</h1>
-              <p style="font-size: 13px; color: #666;">This OTP is valid for 60 seconds. If you did not request this, please secure your credentials.</p>
+              <h1 style="color: #e11d48; font-size: 36px; letter-spacing: 4px; font-weight: bold; margin: 20px 0;">${generatedOtp}</h1>
+              <p style="font-size: 13px; color: #666;">This OTP is valid for 5 minutes. If you did not request this, please secure your credentials.</p>
             </div>
           `
         };
@@ -413,23 +421,42 @@ router.post('/admin/request-otp', async (req, res) => {
       console.warn("Mail configurations missing. Read OTP from server logs above.");
     }
 
-    return res.json({ success: true, message: "OTP sent to admin email." });
+    return res.json({ success: true, token, message: "OTP sent to admin email." });
   } else {
     return res.status(401).json({ success: false, message: "Invalid credentials." });
   }
 });
 
 router.post('/admin/verify-otp', (req, res) => {
-  const { otp } = req.body;
+  const { otp, token } = req.body;
+  const secret = process.env.ADMIN_PASSWORD || 'technoriderzz_admin_jwt_secret';
   console.log(`=== [ADMIN VERIFY OTP] ===`);
   console.log(`Received OTP: ${otp}`);
-  console.log(`Expected OTP: ${currentOtp}`);
-  console.log(`Time Left: ${otpExpiry ? Math.round((otpExpiry - Date.now()) / 1000) : 0}s`);
+  console.log(`Token provided: ${Boolean(token)}`);
   console.log(`=========================`);
+
+  // 1. Stateless verification using signed token (works reliably across all Vercel serverless instances)
+  if (token) {
+    try {
+      const decoded = jwt.verify(token, secret);
+      const incomingHash = crypto.createHmac('sha256', secret).update(String(otp).trim()).digest('hex');
+      if (decoded && decoded.otpHash === incomingHash) {
+        currentOtp = null;
+        otpExpiry = null;
+        return res.json({ success: true, message: "OTP verified successfully." });
+      } else {
+        return res.status(400).json({ success: false, message: "Invalid OTP. Please check your email." });
+      }
+    } catch (jwtErr) {
+      return res.status(400).json({ success: false, message: "OTP has expired. Please request a new code." });
+    }
+  }
+
+  // 2. Fallback to in-memory check (for local development or backwards compatibility)
   if (!currentOtp || !otpExpiry || Date.now() > otpExpiry) {
     return res.status(400).json({ success: false, message: "OTP has expired or was not requested. Please try again." });
   }
-  if (String(otp) === String(currentOtp)) {
+  if (String(otp).trim() === String(currentOtp).trim()) {
     currentOtp = null;
     otpExpiry = null;
     return res.json({ success: true, message: "OTP verified successfully." });
