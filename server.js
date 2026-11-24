@@ -28,11 +28,42 @@ app.use((req, res, next) => {
   next();
 });
 
-// Database Connection
-const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/technoriderzz';
-mongoose.connect(MONGODB_URI)
-  .then(() => console.log('Connected to MongoDB'))
-  .catch(err => console.error('MongoDB connection error:', err));
+// Database Connection with Serverless Connection Caching
+let isConnected = false;
+
+async function connectDB() {
+  if (isConnected || mongoose.connection.readyState === 1) {
+    isConnected = true;
+    return;
+  }
+
+  const uri = process.env.MONGODB_URI;
+  if (!uri && process.env.VERCEL) {
+    console.warn("MongoDB connection skipped: MONGODB_URI is not configured in Vercel Environment Variables.");
+    return;
+  }
+
+  const MONGODB_URI = uri || 'mongodb://localhost:27017/technoriderzz';
+  try {
+    await mongoose.connect(MONGODB_URI, {
+      serverSelectionTimeoutMS: 5000,
+    });
+    isConnected = true;
+    console.log('Connected to MongoDB');
+  } catch (err) {
+    console.error('MongoDB connection error:', err.message);
+  }
+}
+
+// Connect database before handling API routes
+app.use(async (req, res, next) => {
+  try {
+    await connectDB();
+  } catch (err) {
+    console.error('Database connection middleware error:', err.message);
+  }
+  next();
+});
 
 // Routes
 import apiRoutes from './server/routes/api.js';
