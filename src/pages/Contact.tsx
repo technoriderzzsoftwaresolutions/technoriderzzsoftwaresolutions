@@ -38,18 +38,19 @@ const Contact = () => {
     };
 
     try {
-      // 1. Send to local backend
-      const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000/api";
+      // 1. Send to backend
+      const API_URL = "/api";
       const backendRes = await fetch(`${API_URL}/contact`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
       }).catch(err => {
-        throw new Error("Backend server is not running on port 5000. Please start your backend server.");
+        console.error("Backend error:", err);
+        return null;
       });
 
       if (backendRes && !backendRes.ok) {
-        throw new Error("Backend server returned an error: " + backendRes.statusText);
+        console.warn("Backend response not ok:", backendRes.statusText);
       }
 
       // 2. Send to Google Sheets (Original logic)

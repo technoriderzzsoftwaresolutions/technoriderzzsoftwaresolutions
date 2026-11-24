@@ -284,8 +284,10 @@ router.post('/contact', async (req, res) => {
         await transporter.sendMail(mailOptions);
         console.log('Email sent to:', receiver);
       } catch (e) {
-        // Silent fail: do not log email errors to avoid cluttering terminal
+        console.error('Failed to send inquiry email:', e.message);
       }
+    } else {
+      console.warn('Email skipped: SENDER_EMAIL, SENDER_PASSWORD, or RECEIVER_EMAIL not set in environment variables.');
     }
     
     // Always return 201 to the frontend so the user does not see an error modal.

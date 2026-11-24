@@ -77,13 +77,17 @@ const Footer = () => {
             </ul>
           </div>
 
-          {/* Column: Contact */}
+          {/* Column: Contact And Branches*/}
           <div className="space-y-4">
-            <h4 className="text-white font-semibold text-xs uppercase tracking-widest">Contact</h4>
+            <h4 className="text-white font-semibold text-xs uppercase tracking-widest">Contact & Branches</h4>
             <ul className="space-y-3">
-              <li className="flex items-start gap-2.5">
+              <li className="flex items-start gap-2.4">
                 <MapPin className="h-3.5 w-3.5 text-rose-500 shrink-0 mt-0.5" />
-                <span className="text-xs leading-relaxed">Moosarambagh, Hyderabad,<br />Telangana, India</span>
+                <span className="text-xs leading-relaxed">MAINBRANCH: Moosarambagh, Hyderabad,<br />Telangana, India</span>
+                <MapPin className="h-3.5 w-3.5 text-rose-500 shrink-0 mt-0.5" />
+                <span className="text-xs leading-relaxed">Kanyakubjnagar, airport road, indore, madhyapradesh<br />India</span>
+                <MapPin className="h-3.5 w-3.5 text-rose-500 shrink-0 mt-0.5" />
+                <span className="text-xs leading-relaxed">KrishnaNagar, IndustrialArea, Bengaluru <br />India</span>
               </li>
               <li className="flex items-center gap-2.5">
                 <Mail className="h-3.5 w-3.5 text-rose-500 shrink-0" />
